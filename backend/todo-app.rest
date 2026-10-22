@@ -1,0 +1,46 @@
+### GET /
+GET http://localhost:5003
+
+### Register a user POST API/AUTH/REGISTER
+POST http://localhost:5003/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "gilgamesh@gmail.com",
+    "password": "123123123"
+}
+
+### Login a user POST /AUTH/LOGIN
+POST http://localhost:5003/auth/login
+Content-Type: application/json
+
+{
+    "username": "gilgamesh@gmail.com",
+    "password": "123123123"
+}
+
+### Fetch all applications GET /APPLICATIONS (protected)
+GET http://localhost:5003/api/applications/
+Authorization: eyJhb4343GciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzkyNjYxOTU3LCJleHAiOjE3OTI3NDgzNTd9.mF5xj8r4kbX5Ou1MaBsCXkceowtyFVUuhSQD6Jdfij8
+
+### Creates a new application POST /APPLICATIONS (protected)
+POST http://localhost:5003/api/applications
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzkyNjYxOTU3LCJleHAiOjE3OTI3NDgzNTd9.mF5xj8r4kbX5Ou1MaBsCXkceowtyFVUuhSQD6Jdfij8
+Content-Type: application/json 
+
+{
+    "task": "Finish coding the projects"
+}
+
+### Update an application PUT /APPLICATIONS/:ID (protected)
+PUT http://localhost:5003/applications/3?page=4
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzkyNjYxOTU3LCJleHAiOjE3OTI3NDgzNTd9.mF5xj8r4kbX5Ou1MaBsCXkceowtyFVUuhSQD6Jdfij8
+Content-Type: application/json
+
+{
+    "completed": 1
+}
+
+### Delete an application DELETE /APPLICATIONS/:ID (protected)
+DELETE http://localhost:5003/applications/2
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzkyNjYxOTU3LCJleHAiOjE3OTI3NDgzNTd9.mF5xj8r4kbX5Ou1MaBsCXkceowtyFVUuhSQD6Jdfij8
