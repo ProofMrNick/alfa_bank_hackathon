@@ -1,46 +1,53 @@
-### GET /
-GET http://localhost:5003
-
-### Register a user POST API/AUTH/REGISTER
 POST http://localhost:5003/api/auth/register
 Content-Type: application/json
 
 {
-    "username": "gilgamesh@gmail.com",
-    "password": "123123123"
+  "username": "user1",
+  "password": "1",
+  "email": "user1@example.com",
+  "inn": "1234567890",
+  "companyName": "Company 1"
 }
 
-### Login a user POST /AUTH/LOGIN
-POST http://localhost:5003/auth/login
+###login as an admin
+POST http://localhost:5003/api/auth/login
 Content-Type: application/json
 
 {
-    "username": "gilgamesh@gmail.com",
-    "password": "123123123"
+  "username": "admin",
+  "password": "1"
 }
+###
+GET http://localhost:5003/api/client/dashboard
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzkyNzg3NTk0LCJleHAiOjE3OTI4NzM5OTR9.oDtFRb9AnycastWjjy4tHmkCgSikP1SIV3l5hLH0Rvk
 
-### Fetch all applications GET /APPLICATIONS (protected)
-GET http://localhost:5003/api/applications/
-Authorization: eyJhb4343GciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzkyNjYxOTU3LCJleHAiOjE3OTI3NDgzNTd9.mF5xj8r4kbX5Ou1MaBsCXkceowtyFVUuhSQD6Jdfij8
-
-### Creates a new application POST /APPLICATIONS (protected)
-POST http://localhost:5003/api/applications
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzkyNjYxOTU3LCJleHAiOjE3OTI3NDgzNTd9.mF5xj8r4kbX5Ou1MaBsCXkceowtyFVUuhSQD6Jdfij8
-Content-Type: application/json 
-
-{
-    "task": "Finish coding the projects"
-}
-
-### Update an application PUT /APPLICATIONS/:ID (protected)
-PUT http://localhost:5003/applications/3?page=4
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzkyNjYxOTU3LCJleHAiOjE3OTI3NDgzNTd9.mF5xj8r4kbX5Ou1MaBsCXkceowtyFVUuhSQD6Jdfij8
+### 
+POST http://localhost:5003/api/applications/1/submit
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzkyNzg3NTk0LCJleHAiOjE3OTI4NzM5OTR9.oDtFRb9AnycastWjjy4tHmkCgSikP1SIV3l5hLH0Rvk
 Content-Type: application/json
 
 {
-    "completed": 1
+  "loan_id": "3",
+  "loan_sum": "100000",
+  "loan_interest": "12.5",
+  "loan_duration": "60"
 }
 
-### Delete an application DELETE /APPLICATIONS/:ID (protected)
-DELETE http://localhost:5003/applications/2
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzkyNjYxOTU3LCJleHAiOjE3OTI3NDgzNTd9.mF5xj8r4kbX5Ou1MaBsCXkceowtyFVUuhSQD6Jdfij8
+###
+GET http://localhost:5003/api/bank/applications/1
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzkyNzg0NTc0LCJleHAiOjE3OTI4NzA5NzR9.ATBqYs_UB7jsnkXLRSr3hRXfiA7D4j4glU4N40ouE78
+
+### Test banking decision
+POST http://localhost:5003/api/bank/applications/1/decision
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzkyNzg0NTc0LCJleHAiOjE3OTI4NzA5NzR9.ATBqYs_UB7jsnkXLRSr3hRXfiA7D4j4glU4N40ouE78
+Content-Type: application/json
+
+{ "type": "APPROVE", 
+"approvedAmount": 5000000, 
+"approvedTermMonths": 24, 
+"approvedRate": 18
+}
+
+### GET HISTORY
+GET http://localhost:5003/api/applications/1/history
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiaWF0IjoxNzkyNzg3NTk0LCJleHAiOjE3OTI4NzM5OTR9.oDtFRb9AnycastWjjy4tHmkCgSikP1SIV3l5hLH0Rvk

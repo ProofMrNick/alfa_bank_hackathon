@@ -1,16 +1,36 @@
 import jwt from 'jsonwebtoken'
+import db from '../db.js'
 
-function authMiddleware(req, res, next) {
-    const token = req.headers['authorization']
+const authMiddleware = (requiredRole) => {
+    return (req, res, next) => {
+        const token = req.headers['authorization']
 
-    if (!token) { return res.status(401).json({ message: "No token provided" }) }
+        if (!token) { 
+            return res.status(401).json({ message: "No token provided" }) 
+        }
 
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-        if (err) { return res.status(401).json({ message: "Invalid token" }) }
+        try {
 
-        req.userId = decoded.id
-        next()
-    })
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_for_hackathon')
+            
+            req.userId = decoded.id
+            const user = db.prepare('SELECT role FROM users WHERE id = ?').get(req.userId)
+
+            if (!user) {
+                return res.status(404).json({ message: "User not found" })
+            }
+
+            // Если роль не передана в middleware, пропускаем любого авторизованного
+            if (!requiredRole || user.role === requiredRole) {
+                next()
+            } else {
+                return res.status(403).json({ message: "Not enough permissions" })
+            }
+
+        } catch (err) {
+            return res.status(401).json({ message: "Invalid or expired token" })
+        }
+    }
 }
 
 export default authMiddleware

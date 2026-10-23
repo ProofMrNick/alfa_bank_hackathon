@@ -8,17 +8,17 @@ const router = express.Router()
 // Register a new user endpoing /auth/register
 router.post('/register', (req, res) => {
     console.log(`Registering a new user with username: ${req.body.username}`)
-    const { username, password } = req.body
-    // save the username and an irreversibly encrypted password
-    // save gilgamesh@gmail.com | aklsdjfasdf.asdf..qwe..q.we...qwe.qw.easd
+    const { username, password, inn, email, companyName } = req.body
 
-    // encrypt the password
     const hashedPassword = bcrypt.hashSync(password, 8)
+    console.log(hashedPassword)
 
-    // save the new user and hashed password to the db
     try {
         const insertUser = db.prepare(`INSERT INTO users (username, password) VALUES (?, ?)`)
         const result = insertUser.run(username, hashedPassword)
+
+        const insertUserInfo = db.prepare(`INSERT INTO user_info (user_id, email, name, inn, company_name) VALUES (?, ?, ?, ?, ?)`)
+        insertUserInfo.run(result.lastInsertRowid, email, username, inn, companyName)
 
         // create a token
         const token = jwt.sign({ id: result.lastInsertRowid }, process.env.JWT_SECRET, { expiresIn: '24h' })
@@ -27,12 +27,11 @@ router.post('/register', (req, res) => {
         console.log(err.message)
         res.sendStatus(503)
     }
+
+    console.log(db.prepare(`SELECT * FROM user_info`).all())
 })
 
 router.post('/login', (req, res) => {
-    // we get their email, and we look up the password associated with that email in the database
-    // but we get it back and see it's encrypted, which means that we cannot compare it to the one the user just used trying to login
-    // so what we can to do, is again, one way encrypt the password the user just entered
 
     const { username, password } = req.body
 

@@ -4,6 +4,8 @@ import { fileURLToPath } from 'url'
 import authRoutes from './routes/authRoutes.js'
 import applicationsRoutes from './routes/applicationsRoutes.js'
 import productsRoutes from './routes/productsRoutes.js'
+import clientRoutes from './routes/clientRoutes.js'
+import bankRoutes from './routes/bankRoutes.js'
 import authMiddleware from './middleware/authMiddleware.js'
 
 const app = express()
@@ -27,9 +29,12 @@ app.get('/', (req, res) => {
 })
 
 // Routes
+app.use('/api/applications',  authMiddleware("CLIENT"), applicationsRoutes) // private route, auth required, return middleware back
+app.use('/api/client', authMiddleware("CLIENT"), clientRoutes) // private route, auth required, return middleware back
+app.use('/api/bank', authMiddleware("EMPLOYEE"), bankRoutes) // private route, auth required, return middleware back
+
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productsRoutes) // public route, no auth required
-app.use('/api/applications', authMiddleware, applicationsRoutes)
 
 app.listen(PORT, () => {
     console.log(`Server has started on port: ${PORT}`)
