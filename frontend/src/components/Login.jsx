@@ -35,7 +35,7 @@ function Login() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: login,
+          username: login,
           password: password,
         }),
       });
@@ -50,7 +50,8 @@ function Login() {
 
         // if a bank employee tries to open "/" -> redirecting them to "/bank"
         // if a user tries to open "/bank"      -> redirecting them to "/"
-        if (data.user.role === "BANK_EMPLOYEE") {
+        //console.log(JSON.stringify(data.username));
+        if (data.role === "EMPLOYEE") {
           navigate("/bank");
         } else {
           navigate("/");
@@ -79,7 +80,7 @@ function Login() {
         <input
           className="login-input"
           type="text"
-          placeholder="Логин (email)"
+          placeholder="Логин"
           value={login}
           onChange={(e) => setLogin(e.target.value)}
         />

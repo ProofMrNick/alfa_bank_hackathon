@@ -1,4 +1,5 @@
 import express from 'express'
+import cors from 'cors'
 import path, { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import authRoutes from './routes/authRoutes.js'
@@ -18,6 +19,13 @@ const PORT = process.env.PORT || 5003
 const __filename = fileURLToPath(import.meta.url)
 // Get the directory name from the file path
 const __dirname = dirname(__filename)
+
+// разрешить запросы с фронта
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+}));
+
 
 // Middleware
 app.use(express.json())
