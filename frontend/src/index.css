@@ -1,0 +1,22 @@
+
+:root {
+  --color-alfa-red: #F93A2B;
+  --color-red-buttons: #F93A2B;
+  --color-error-bg: #FFB4B4;
+  --color-success-bg: #CAE9D0;
+  --color-pending-bg: #F4E0C4;
+  --color-error-text: #E72E23;
+  --color-success-text: #1C9541;
+  --color-pending-text: #F4B153;
+  --color-text: #000000;
+  --color-dark: #212124;
+  --color-dark-grey: #717173;
+  --color-grey-input-underline: #212124;
+  --color-input-text: #6F6F78;
+  --color-grey: #E6E8EC;
+  --color-light-grey: #F3F4F5;
+  --color-light-grey-gb: #F2F3F5;
+
+  --font-title: "Inter", sans-serif;
+  --font-regular: "Roboto", sans-serif;
+}
