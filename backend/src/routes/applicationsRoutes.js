@@ -1,5 +1,7 @@
 import express from 'express'
 import db from '../db.js'
+import bki_db from '../../mockDatabase/bki_db.js'
+import fns_db from '../../mockDatabase/fns_db.js'
 
 const router = express.Router()
 
@@ -23,12 +25,13 @@ router.get('/', (req, res) => {
 */
 
 // View an application
-router.get('/:id', (req, res) => {
-    const { id } = req.params
+router.get('/:local_id', (req, res) => {
+    const { local_id } = req.params
     const userId = req.userId
     const getApplication = db.prepare(`SELECT * FROM applications WHERE local_id = ? AND user_id = ?`)
-    const application = getApplication.get(id, userId)
+    const application = getApplication.get(local_id, userId)
 
+     if (!application) { return res.status(404).send({ message: "Application not found" }) }
     res.json(application)
 
 })
@@ -37,11 +40,14 @@ router.get('/:local_id/history', (req, res) => {
     const { local_id } = req.params
     const userId = req.userId
 
+    
     const getGlobalId = db.prepare(`SELECT global_id FROM applications WHERE local_id = ? AND user_id = ?`)
-    const globalId = getGlobalId.get(local_id, userId).global_id
+    const globalId = getGlobalId.get(local_id, userId)
+    if(!globalId) { return res.status(404).send({ message: "Application not found" }) }
 
     const getApplicationLogs = db.prepare(`SELECT * FROM applications_logs WHERE application_global_id = ?`)
-    const applicationLogs = getApplicationLogs.all(globalId)
+    const applicationLogs = getApplicationLogs.all(globalId.global_id)
+    if(!applicationLogs) { return res.status(404).send({ message: "Application history not found" }) }
 
     res.json(applicationLogs)
 
@@ -57,18 +63,30 @@ router.post('/:applId/submit', (req, res) => {
     const createApplication = db.prepare(`INSERT INTO applications (user_id, local_id, loan_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?)`)
     createApplication.run(userId, applId, loan_id, loan_sum, loan_interest, loan_duration)
 
+    const row = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`).get(userId)
+    const inn = row.inn
+    const fns_info = fns_db.prepare(`SELECT * FROM fns WHERE inn = ?`).get(inn)
+    const bki_info = bki_db.prepare(`SELECT * FROM bki WHERE inn = ?`).get(inn)
     res.status(201).send({message: "Application created"})
 
+    const user_risk_score =  900
+    const updateRiskScore = db.prepare(`UPDATE user_info SET risk_score = ? WHERE user_id = ? `)
+    updateRiskScore.run(user_risk_score, userId)
+
+    const updateApplication = db.prepare(`UPDATE applications SET status = ? WHERE user_id = ? AND local_id = ?`)
+    updateApplication.run('PENDING', userId, applId)
+
+    const addComment = db.prepare(`UPDATE applications_logs
+                    SET comment = ?
+                    WHERE id = (
+                        SELECT id FROM applications_logs 
+                        WHERE application_global_id = ? 
+                        ORDER BY timestamp DESC 
+                        LIMIT 1
+                    )`)
+        addComment.run(`${user_risk_score}`, applId)
+
 })
 
-// Delete an application
-router.delete('/:id', (req, res) => {
-    const { id } = req.params
-    const userId = req.userId
-    const deleteApplication = db.prepare(`DELETE FROM applications WHERE local_id = ? AND user_id = ?`)
-    deleteApplication.run(id, userId)
-
-    res.send({ message: "Application deleted" })
-})
 
 export default router

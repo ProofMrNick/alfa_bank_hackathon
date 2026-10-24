@@ -20,7 +20,7 @@ router.post('/register', (req, res) => {
         const insertUserInfo = db.prepare(`INSERT INTO user_info (user_id, email, name, inn, company_name) VALUES (?, ?, ?, ?, ?)`)
         insertUserInfo.run(result.lastInsertRowid, email, username, inn, companyName)
 
-        // create a token
+        // create a token, take JWT secret from .env file, and set the expiration time to 24 hours
         const token = jwt.sign({ id: result.lastInsertRowid }, process.env.JWT_SECRET, { expiresIn: '24h' })
         res.json({ token })
     } catch (err) {
