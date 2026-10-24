@@ -16,21 +16,26 @@ router.get("/applications/:applId", (req, res) => {
 
 
     const getApplication = db.prepare("SELECT * FROM applications WHERE global_id = ? ")
-    const application = getApplication.all(applId)
+    const application = getApplication.get(applId)
+    if(!application) { return res.status(404).send({ message: "Application not found" }) }
 
     res.json(application)
 })
 
 router.post("/applications/:applId/decision", (req, res) => {
     const {applId} = req.params
-    const {type, approvedAmount = null, approvedTermMonths = null, approvedRate = null, missingFields = null, reason = null, comment = null} = req.body || -1
+    const {type, approvedAmount = null, approvedTermMonths = null, approvedRate = null, missingFields = null, reason = null, comment = null} = req.body 
 
-    console.log(`Decision for application ${req.params.applId}: ${type}, ${approvedAmount}, ${approvedTermMonths}, ${approvedRate}, ${missingFields}, ${reason}, ${comment}`)
     
-    if (type == "APPROVE"){
-        const updateStatus = db.prepare("UPDATE applications SET status = ?, loan_sum = ?, loan_interest = ?, loan_duration = ? WHERE global_id == ?")
-        const resulteUpdateStatus = updateStatus.run(type, approvedAmount, approvedRate, approvedTermMonths, applId)
 
+    const getApplication = db.prepare("SELECT * FROM applications WHERE global_id = ?")
+    const application = getApplication.get(applId)
+    if(!application) { return res.status(404).send({ message: "Application not found" }) }
+
+    if (type == "APPROVE" || type == "COUNTEROFFER"){
+        const updateStatus = db.prepare("UPDATE applications SET status = ?, loan_sum = ?, loan_interest = ?, loan_duration = ? WHERE global_id == ?")
+        updateStatus.run(type, approvedAmount, approvedRate, approvedTermMonths, applId)
+        console.log(`Decision for application ${req.params.applId}: ${type}`)
         const addComment = db.prepare(`UPDATE applications_logs
                     SET comment = ?
                     WHERE id = (
@@ -40,10 +45,42 @@ router.post("/applications/:applId/decision", (req, res) => {
                         LIMIT 1
                     )`)
         addComment.run(comment, applId)
-        res.json(resulteUpdateStatus)
     }
-    //todo: add another statuses
 
-    res.status(200)
+    else if(type == "REQUEST_INFO"){
+        const updateStatus = db.prepare("UPDATE applications SET status = ? WHERE global_id == ?")
+        updateStatus.run(type, applId)
+
+        const addCommentAndMetadata = db.prepare(`UPDATE applications_logs
+                    SET comment = ?, metadata = ?
+                    WHERE id = (
+                        SELECT id FROM applications_logs 
+                        WHERE application_global_id = ? 
+                        ORDER BY timestamp DESC 
+                        LIMIT 1
+                    )`)
+        addCommentAndMetadata.run(comment, `{missingFields: ${missingFields}}`, applId)
+
+    }
+    
+    else if(type == "DECLINE"){
+        const updateStatus = db.prepare("UPDATE applications SET status = ? WHERE global_id == ?")
+        updateStatus.run(type, applId)
+
+        const addCommentAndMetadata = db.prepare(`UPDATE applications_logs
+                    SET comment = ?, metadata = ?
+                    WHERE id = (
+                        SELECT id FROM applications_logs 
+                        WHERE application_global_id = ? 
+                        ORDER BY timestamp DESC 
+                        LIMIT 1
+                    )`)
+        addCommentAndMetadata.run(comment, `{reason: ${reason}}`, applId)
+    }
+    else{
+        return res.status(400).send({ message: "Invalid decision type" })
+    }
+
+    res.sendStatus(200)
 })
 export default router

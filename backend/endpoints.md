@@ -16,6 +16,8 @@ get /:id/history			-- Get all the log of all the status changes of the applicati
 
 
 
+
+
 ***/auth(public)***
 
 
@@ -26,6 +28,8 @@ post /login				-- Login a user **{ username, password } = req.body**
 
 
 
+
+
 ***/bank(employee)***
 
 
@@ -33,7 +37,7 @@ post /login				-- Login a user **{ username, password } = req.body**
 get /applications 			-- List all the applications
 get /applications/:applId 		-- Get the application with global\_id = applId
 
-
+post /applications/:applId/decision	-- Decide on the application with global\_id = applID, null by default **{type, approvedAmount, approvedTermMonths, approvedRate,missingFields, reason, comment} = req.body**
 
 
 
@@ -45,6 +49,8 @@ get /applications/:applId 		-- Get the application with global\_id = applId
 
 get /dashboard				-- Returns json({ userInfo, applications, latestApplicationsLog, recommendations })
 
+get /recommendations			-- Returns recommended loans for a given user, using ML ***(todo: IMPLEMENT ML RECOMMENDATIONS!!!!)***
+
 
 
 /***products***
@@ -52,6 +58,15 @@ get /dashboard				-- Returns json({ userInfo, applications, latestApplicationsLo
 
 
 get /					-- Returns list of all products(loans)
+
+
+
+
+
+**/health**	
+
+&#x09;			
+get / 					-- Returns the state of the server
 
 
 

@@ -4,10 +4,13 @@ import { fileURLToPath } from 'url'
 import authRoutes from './routes/authRoutes.js'
 import applicationsRoutes from './routes/applicationsRoutes.js'
 import productsRoutes from './routes/productsRoutes.js'
+import recommendationsRoutes from './routes/recommendationsRoutes.js'
 import clientRoutes from './routes/clientRoutes.js'
 import bankRoutes from './routes/bankRoutes.js'
+import healthRoutes from './routes/healthRoutes.js'
+import mocksRoutes from './routes/mocksRoutes.js'
 import authMiddleware from './middleware/authMiddleware.js'
-
+import fill_db from './fill_db.js'
 const app = express()
 const PORT = process.env.PORT || 5003
 
@@ -18,24 +21,22 @@ const __dirname = dirname(__filename)
 
 // Middleware
 app.use(express.json())
-// Serves the HTML file from the /public directory
-// Tells express to serve all files from the public folder as static assets / file. Any requests for the css files will be resolved to the public directory.
 app.use(express.static(path.join(__dirname, '../public')))
 
-// Serving up the HTML file from the /public directory
-app.get('/', (req, res) => {
-    //res.sendFile(path.join(__dirname, 'public', 'index.html'))
-    //send the frontpage provided by Nikita
-})
 
 // Routes
 app.use('/api/applications',  authMiddleware("CLIENT"), applicationsRoutes) // private route, auth required, return middleware back
 app.use('/api/client', authMiddleware("CLIENT"), clientRoutes) // private route, auth required, return middleware back
+app.use('/api/recommendations', authMiddleware("CLIENT"), recommendationsRoutes) // private route, auth required, return middleware back
 app.use('/api/bank', authMiddleware("EMPLOYEE"), bankRoutes) // private route, auth required, return middleware back
 
 app.use('/api/auth', authRoutes)
 app.use('/api/products', productsRoutes) // public route, no auth required
 
+app.use('/api/mocks', mocksRoutes)
+app.use('/api/health', healthRoutes)
+
 app.listen(PORT, () => {
     console.log(`Server has started on port: ${PORT}`)
+    fill_db()
 })

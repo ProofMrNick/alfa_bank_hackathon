@@ -1,6 +1,7 @@
-import express from 'express'
+import express, { json } from 'express'
 import db from '../db.js'
-
+import bki_db from '../../mockDatabase/bki_db.js'
+import fns_db from '../../mockDatabase/fns_db.js'
 const router = express.Router()
 
 // Get the dashboard data for the authenticated user: user_info, applications, latestApplicationsLog, recommended_loans
@@ -26,6 +27,19 @@ router.get('/dashboard', (req, res) => {
     const recommendations = getRecommendedloans.all()
 
     res.json({ userInfo, applications, latestApplicationsLog, recommendations })
+})
+
+router.get('/recommendations', (req, res) => {
+    const userId = req.userId
+    const userInfo = db.aggregate(`SELECT * FROM user_info WHERE user_id = ?`, [userId])
+    const inn = userInfo.inn
+    const fns_info = fns_db.aggregate(`SELECT * FROM fns WHERE inn = ?`, [inn])
+    const bki_info = bki_db.aggregate(`SELECT * FROM bki WHERE inn = ?`, [inn])    
+
+    const recommendedLoans = askML(json.stringify({fns_info, bki_info}))
+    
+
+    res.json(recommendedLoans)
 })
 
 export default router
