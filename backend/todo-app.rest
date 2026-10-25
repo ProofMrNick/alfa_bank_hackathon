@@ -39,8 +39,8 @@ POST {{baseUrl}}/auth/login
 Content-Type: application/json
 
 {
-  "username": "client@test.local",
-  "password": "password123"
+  "username": "client",
+  "password": "12345678"
 }
 
 ### 3.3. Регистрация менеджера (для тестирования bank эндпоинтов)
