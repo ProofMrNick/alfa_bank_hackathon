@@ -11,7 +11,7 @@ import bankRoutes from './routes/bankRoutes.js'
 import healthRoutes from './routes/healthRoutes.js'
 import mocksRoutes from './routes/mocksRoutes.js'
 import authMiddleware from './middleware/authMiddleware.js'
-import fill_db from './fill_db.js'
+import fill_db, { runAutoTests } from './fill_db.js'
 const app = express()
 const PORT = process.env.PORT || 5003
 
@@ -46,5 +46,8 @@ app.use('/api/health', healthRoutes)
 
 app.listen(PORT, () => {
     console.log(`Server has started on port: ${PORT}`)
+
+
     fill_db()
+    runAutoTests()
 })

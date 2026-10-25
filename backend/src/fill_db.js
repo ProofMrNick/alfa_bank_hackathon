@@ -12,11 +12,6 @@ export default function fill_db() {
         ('ml', '${hashed_ml_password}', 'EMPLOYEE')
     `)
     
-    const insertUser = db.prepare(`INSERT INTO users (username, password) VALUES (?, ?)`)
-    const result = insertUser.run('client', hashed_client_password)
-
-    const insertUserInfo = db.prepare(`INSERT INTO user_info (user_id, email, name, inn, company_name) VALUES (?, ?, ?, ?, ?)`)
-    insertUserInfo.run(result.lastInsertRowid, 'client@test.local', 'client', "7700000001", "ИП Клиентов И.И.")
 
     //mock data for testing
     // 2. Кредиты
@@ -28,6 +23,74 @@ export default function fill_db() {
         ('Кредит для бизнеса', 14.0, 36, 500000, 10000000)
     `)
     
-    db
-    
+}
+
+// auto-test.js
+const BASE_URL = 'http://localhost:5003/api';
+
+async function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+export async function runAutoTests() {
+
+    try {
+
+
+        // 3. Register Client
+
+        const regRes = await fetch(`${BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: 'client',
+                password: '12345678',
+                email: 'auto@test.local',
+                inn: '7700000099',
+                companyName: 'AutoTest Inc'
+            })
+        });
+        console.log('Register:', await regRes.json());
+
+        // 4. Login Client
+        console.log('\n4. Логин клиента...');
+        const loginRes = await fetch(`${BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: 'client', password: '12345678' })
+        });
+        const loginData = await loginRes.json();
+        const token = loginData.token; // Убедитесь, что ваш логин возвращает { token: "..." }
+
+        if (!token) {
+            return;
+        }
+
+        const authHeaders = { 'Authorization': token, 'Content-Type': 'application/json' };
+
+        // 5. Dashboard
+        await fetch(`${BASE_URL}/client/dashboard`, { headers: authHeaders })
+            .then(r => r.json()).then(d => console.log('Dashboard OK:', !!d.userInfo));
+
+        // 6. Submit Application (local_id = 1)
+        const submitRes = await fetch(`${BASE_URL}/applications/1/submit`, {
+            method: 'POST',
+            headers: authHeaders,
+            body: JSON.stringify({
+                loan_id: 1,
+                loan_sum: 500000,
+                loan_interest: 12.5,
+                loan_duration: 60
+            })
+        });
+        const submitData = await submitRes.json();
+        console.log('Submit:', submitData);
+        
+        // Извлекаем global_id из ответа (если ваш бэкенд его возвращает)
+        // const globalId = submitData.data?.application_id || 1; 
+
+
+    } catch (error) {
+        console.error('Ошибка при автоматическом тестировании:', error.message);
+    }
 }
