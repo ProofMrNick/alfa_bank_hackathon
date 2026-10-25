@@ -1,0 +1,52 @@
+{
+  "application_id": 432890,
+  "trigger": "PRE_DECISION",
+  "fns": {
+    "inn": "7700000099",
+    "ogrn": "1027700000000",
+    "name": "ООО Надёжный бизнес",
+    "legal_form": "OOO",
+    "registration_date": "2018-05-10",
+    "status": "ACTIVE",
+    "edo_participant": 1
+  },
+  "bki": {
+    "inn": "7700000099",
+    "report_status": "FOUND",
+    "active_loans_count": 1,
+    "total_debt": 1000000,
+    "monthly_payment": 80000,
+    "delinquencies_12m_count": 0,
+    "max_delinquency_days": 0,
+    "has_default": 0
+  },
+  "internal": {
+    "inn": "7700000099",
+    "has_account": 1,
+    "account_opened_date": "2020-01-10",
+    "avg_monthly_inflow": 5000000,
+    "avg_monthly_outflow": 3800000,
+    "acquiring_monthly_volume": 1000000,
+    "blocked_115fz": 0,
+    "previous_products_closed_well": 1
+  },
+  "application": {
+    "requested_amount": 3000000,
+    "requested_term_months": 24,
+    "purpose": "WORKING_CAPITAL",
+    "declared_annual_revenue": 60000000,
+    "product_id": 1
+  },
+  "products": [
+    {
+      "id": 1,
+      "name": "Оборотный кредит",
+      "min_amount": 500000,
+      "max_amount": 10000000,
+      "min_term_months": 3,
+      "max_term_months": 36,
+      "base_rate": 15.0,
+      "allowed_purposes": ["WORKING_CAPITAL"]
+    }
+  ]
+}

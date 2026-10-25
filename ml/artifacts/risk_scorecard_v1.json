@@ -1,0 +1,20 @@
+{
+  "model_name": "rule_based_risk_scorecard",
+  "version": "risk_scorecard_v1.0.0",
+  "base_score": 600,
+  "score_range": {
+    "min": 0,
+    "max": 999
+  },
+  "risk_levels": {
+    "low_from": 750,
+    "medium_from": 550
+  },
+  "stop_score_cap": 299,
+  "critical_debt_to_revenue": 1.5,
+  "probability": {
+    "kind": "heuristic_not_calibrated",
+    "center": 430,
+    "scale": 80
+  }
+}
