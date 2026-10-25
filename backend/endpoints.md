@@ -14,7 +14,7 @@ post /:id/submit			-- Submit an application **local\_id = id, {loan\_id, loan\_s
 
 get /:id/history			-- Get all the log of all the status changes of the application with **local\_id = id**
 
-
+post /:id/clarify			-- Fills in missing fields in FNS, BKI, internal\_registry **{ bki\_data = {}, fns\_data = {}, internal\_data = {} } = req.body (e.g. fns\_data = {"ogrn": "example\_ogrn"}),** only works if field is null, then sets status of the application to "PENDING", puts bki\_data, fns\_data, internal\_data and list of updated fields in comment field of application\_log
 
 
 
@@ -49,7 +49,7 @@ post /applications/:applId/decision	-- Decide on the application with global\_id
 
 get /dashboard				-- Returns json({ userInfo, applications, latestApplicationsLog, recommendations })
 
-get /recommendations			-- Returns recommended loans for a given user, using ML ***(todo: IMPLEMENT ML RECOMMENDATIONS!!!!)***
+get /recommendations			-- Returns recommended loans for a given user, and loan parameters using ML ***(todo: IMPLEMENT ML RECOMMENDATIONS!!!!)***
 
 
 
@@ -63,10 +63,8 @@ get /					-- Returns list of all products(loans)
 
 
 
-**/health**	
+**/health**
 
-&#x09;			
+&#x09;
 get / 					-- Returns the state of the server
-
-
 
