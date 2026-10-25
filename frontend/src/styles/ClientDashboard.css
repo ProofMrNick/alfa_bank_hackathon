@@ -54,11 +54,6 @@
   margin-bottom: 60px;
 }
 
-.dash-logo-text {
-  font-size: 16px;
-  font-weight: 700;
-}
-
 .dash-nav {
   display: flex;
   flex-direction: column;
