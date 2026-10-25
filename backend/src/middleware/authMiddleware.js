@@ -3,16 +3,20 @@ import db from '../db.js'
 
 const authMiddleware = (requiredRole) => {
     return (req, res, next) => {
-        const token = req.headers['authorization']
+        const authHeader = req.headers['authorization']
 
-        if (!token) { 
-            return res.status(401).json({ message: "No token provided" }) 
+        if (!authHeader) {
+            return res.status(401).json({ message: "No token provided" })
         }
 
-        try {
+        // фронт шлёт "Bearer <token>", .rest шлёт "<token>" — поддерживаем оба
+        const token = authHeader.startsWith('Bearer ')
+            ? authHeader.slice(7)
+            : authHeader
 
+        try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key_for_hackathon')
-            
+
             req.userId = decoded.id
             const user = db.prepare('SELECT role FROM users WHERE id = ?').get(req.userId)
 

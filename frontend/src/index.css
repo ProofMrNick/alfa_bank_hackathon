@@ -20,3 +20,9 @@
   --font-title: "Inter", sans-serif;
   --font-regular: "Roboto", sans-serif;
 }
+
+
+html, body {
+  padding: 0;
+  margin: 0;
+}

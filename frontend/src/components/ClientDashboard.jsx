@@ -1,9 +1,8 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import '../styles/ClientDashboard.css';
 
-const API_URL = import.meta.env.LOCAL_API_URL;
+const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 
 const STATUS_MAP = {
@@ -19,7 +18,7 @@ const STATUS_MAP = {
   COMPLETED: { label: "Завершена", cls: "badge-green" },
 }
 
-// types of messages in teh feed
+// типы сообщений в ленте
 const FEED_TYPE_MAP = {
   STATUS_UPDATE: "Статус по заявке",
   ACTION_REQUIRED: "Нужно действие",
@@ -34,6 +33,74 @@ function formatMoney(value) {
 }
 
 
+
+// normalizers for raw data
+function normalizeUserFromInfo(info) {
+  if (!info) return null
+  return {
+    id: info.user_id ?? null,
+    name: info.name ?? "",
+    email: info.email ?? "",
+    role: "CLIENT",
+  }
+}
+
+
+function normalizeCompanyFromInfo(info) {
+  if (!info) return null
+  return {
+    inn: info.inn ?? "",
+    name: info.company_name ?? "",
+  }
+}
+
+// продукт из recommendations -> поля для OfferCard.
+// Работает в двух режимах:
+//   1) каталог (current): id / name / interest_rate / duration / max_amount, itemId нет
+//   2) остатки сессий подбора (future): itemId / preliminaryLimit / preliminaryRate / termMonths
+// Через ?? берём первое непустое, поэтому одна функция годится для обоих.
+function normalizeOffer(raw) {
+  return {
+    id: raw.id ?? raw.productId ?? null,
+    itemId: raw.itemId ?? null,
+    productCode: String(raw.id ?? raw.productId ?? ""),
+    productName: raw.name ?? raw.productName ?? "",
+    description: raw.description ?? "",
+    maxAmount: raw.max_amount ?? raw.maxAmount ?? raw.preliminaryLimit ?? null,
+    minAmount: raw.min_amount ?? raw.minAmount ?? null,
+    baseRate: raw.interest_rate ?? raw.baseRate ?? raw.preliminaryRate ?? null,
+    maxTermMonths: raw.duration ?? raw.maxTermMonths ?? raw.termMonths ?? null,
+  }
+}
+
+
+function normalizeApplication(raw) {
+  console.log("application raw:", raw)
+  return {
+    id: raw.id ?? raw.global_id ?? null,
+    number: raw.number ?? raw.local_id ?? null,
+    status: raw.status ?? "",
+    amount: raw.amount ?? raw.loan_sum ?? null,
+    termMonths: raw.termMonths ?? raw.loan_duration ?? null,
+    rate: raw.rate ?? raw.loan_interest ?? null,
+    productName: raw.productName ?? raw.loan_name ?? raw.product_name ?? "",
+  }
+}
+
+
+function normalizeFeedItem(raw, index) {
+  console.log("feed raw:", raw)
+  return {
+    id: raw.id ?? raw.event_id ?? index,
+    type: raw.event_type ?? raw.type ?? "STATUS_UPDATE",
+    subtitle: raw.application_summary ?? raw.subtitle ?? null,
+    title: raw.title ?? raw.event_title ?? "",
+    text: raw.message ?? raw.text ?? raw.description ?? "",
+  }
+}
+
+
+
 function ApplicationCard(props) {
   const app = props.app
   const status = STATUS_MAP[app.status] || { label: app.status, cls: "badge-gray" }
@@ -42,7 +109,6 @@ function ApplicationCard(props) {
     <div className="dash-app-card">
       <div className="dash-app-top">
         <span className="dash-app-num">№ {app.number}</span>
-        {/* displaying interest rate only if backend sent it */}
         {app.rate ? <span className="dash-app-rate">{app.rate} %</span> : null}
         <span className="dash-app-term">{app.termMonths} мес</span>
         <span className={"dash-badge " + status.cls}>{status.label}</span>
@@ -72,16 +138,18 @@ function FeedCard(props) {
 }
 
 
-// recommended offers
+
 function OfferCard(props) {
   const rec = props.rec
-  // variating color
   const colorCls = props.index % 2 === 0 ? "offer-blue" : "offer-peach"
+
+  const isBusy = props.applyingId != null && props.applyingId === rec.itemId
+  const anyPending = props.applyingId != null
 
   return (
     <div className={"dash-offer-card " + colorCls}>
       <div className="dash-offer-name">{rec.productName}</div>
-      <div className="dash-offer-desc">{rec.description}</div>
+      {rec.description ? <div className="dash-offer-desc">{rec.description}</div> : null}
 
       <div className="dash-offer-params">
         <div className="dash-offer-param">
@@ -90,19 +158,20 @@ function OfferCard(props) {
         </div>
         <div className="dash-offer-param">
           <span className="dash-offer-label">ставка от</span>
-          <span className="dash-offer-value">{rec.baseRate} %</span>
+          <span className="dash-offer-value">{rec.baseRate != null ? rec.baseRate + " %" : "—"}</span>
         </div>
         <div className="dash-offer-param">
           <span className="dash-offer-label">срок до</span>
-          <span className="dash-offer-value">{rec.maxTermMonths} мес</span>
+          <span className="dash-offer-value">{rec.maxTermMonths != null ? rec.maxTermMonths + " мес" : "—"}</span>
         </div>
       </div>
 
       <button
         className="dash-btn-red"
-        onClick={() => props.onApply(rec.productCode)}
+        disabled={anyPending}
+        onClick={() => props.onApply(rec)}
       >
-        Оформить
+        {isBusy ? "Оформляем…" : "Оформить"}
       </button>
     </div>
   )
@@ -119,6 +188,7 @@ function ClientDashboard() {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [applyingId, setApplyingId] = useState(null)
 
   const navigate = useNavigate()
 
@@ -141,28 +211,33 @@ function ClientDashboard() {
         },
       })
 
-      // if token has expired, redirecting user to "/login"
       if (response.status === 401) {
         localStorage.removeItem("token")
         localStorage.removeItem("user")
         navigate("/login")
-
         return
       }
 
-
-      const data = await response.json()
+      const rawText = await response.text()
+      let data = null
+      try {
+        data = JSON.parse(rawText)
+      } catch (parseErr) {
+        console.error("Ответ не JSON. Статус:", response.status, "Тело:", rawText.slice(0, 200))
+        throw parseErr
+      }
 
       if (response.ok) {
-        setUser(data.user)
-        setCompany(data.company)
-        setApplications(data.applications || [])
-        setFeed(data.feed || [])
-        setOffers(data.recommendations || [])
+        setUser(normalizeUserFromInfo(data.userInfo))
+        setCompany(normalizeCompanyFromInfo(data.userInfo))
+        setApplications((data.applications || []).map(normalizeApplication))
+        setFeed((data.latestApplicationsLog || []).map(normalizeFeedItem))
+        setOffers((data.recommendations || []).map(normalizeOffer))
       } else {
         setError(data.message || "Не удалось загрузить данные")
       }
     } catch (e) {
+      console.error("fetch упал:", e)
       setError("Сервер недоступен. Попробуйте обновить страницу")
     }
 
@@ -174,12 +249,60 @@ function ClientDashboard() {
     navigate("/applications/" + id)
   }
 
-/*
-  function handleApplyProduct(code) {
-    // уходим в подбор с предвыбранным продуктом
-    navigate("/smart-selection?product=" + code)
+
+  // оформление предложения прямо на дашборде.
+  // Работает ТОЛЬКО по itemId (остатки сессий подбора). Если itemId нет —
+  // значит бэкенд отдаёт голый каталог, и корректную заявку по нему создать
+  // нельзя (нет суммы/срока/цели клиента) -> честно ведём в подбор.
+  async function handleApplyProduct(rec) {
+    if (!rec.itemId) {
+      navigate("/smart-selection")
+      return
+    }
+
+    setApplyingId(rec.itemId)
+    setError("")
+
+    try {
+      const token = localStorage.getItem("token")
+
+      const response = await fetch(API_URL + "/api/applications/quick", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + token,
+        },
+        body: JSON.stringify({ recommendationItemId: rec.itemId }),
+      })
+
+      if (response.status === 401) {
+        localStorage.removeItem("token")
+        navigate("/login")
+        return
+      }
+
+      const raw = await response.text()
+      let data = null
+      try {
+        data = JSON.parse(raw)
+      } catch (e) {
+        console.error("quick: ответ не JSON", response.status, raw.slice(0, 200))
+        throw e
+      }
+
+      if (response.ok) {
+        navigate("/applications/" + data.id)
+      } else {
+        setError(data.message || "Не удалось оформить заявку")
+      }
+    } catch (e) {
+      console.error("quick упал:", e)
+      setError("Сервер недоступен. Попробуйте ещё раз")
+    }
+
+    setApplyingId(null)
   }
-*/
+
 
   function handleLogout() {
     localStorage.removeItem("token")
@@ -187,7 +310,6 @@ function ClientDashboard() {
     navigate("/login")
   }
 
-  // greeting to be display
   const firstName = user && user.name ? user.name.split(" ")[0] : "друг"
   const companyLine = company ? company.name : ""
 
@@ -200,7 +322,7 @@ function ClientDashboard() {
       <div className="dash-body">
         <aside className="dash-sidebar">
           <div className="dash-logo">
-            <img src="../../public/assets/alfa-logo-full.svg" className="login-logo" />
+            <img src="../../public/assets/alfa-logo-full.svg" className="login-logo" alt="logo" />
           </div>
 
           <nav className="dash-nav">
@@ -209,7 +331,7 @@ function ClientDashboard() {
               Главная
             </Link>
             <Link to="/smart-selection" className="dash-nav-item">
-              <span className="dash-nav-icon">o</span>
+              <span className="material-symbols-outlined">savings</span>
               Подобрать финансирование
             </Link>
           </nav>
@@ -226,7 +348,6 @@ function ClientDashboard() {
 
           {!loading && error === "" && (
             <div className="dash-grid">
-              {/* левая колонка: заявки + лента */}
               <div className="dash-col-left">
                 <section className="dash-block">
                   <h2 className="dash-block-title">Ваши заявки</h2>
@@ -272,9 +393,10 @@ function ClientDashboard() {
 
                 {offers.map((rec, index) => (
                   <OfferCard
-                    key={rec.productCode}
+                    key={rec.id}
                     rec={rec}
                     index={index}
+                    applyingId={applyingId}
                     onApply={handleApplyProduct}
                   />
                 ))}
@@ -287,4 +409,4 @@ function ClientDashboard() {
   )
 }
 
-export default ClientDashboard;
+export default ClientDashboard
