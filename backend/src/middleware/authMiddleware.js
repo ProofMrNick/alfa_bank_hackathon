@@ -16,10 +16,13 @@ const authMiddleware = (requiredRole) => {
             req.userId = decoded.id
             const user = db.prepare('SELECT role FROM users WHERE id = ?').get(req.userId)
 
+
             if (!user) {
                 return res.status(404).json({ message: "User not found" })
             }
-
+            if (requiredRole == 'CLIENT'){
+                req.inn = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`).get(req.userId).inn
+            }
             // Если роль не передана в middleware, пропускаем любого авторизованного
             if (!requiredRole || user.role === requiredRole) {
                 next()

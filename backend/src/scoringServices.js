@@ -21,10 +21,11 @@ export function rescoreApplication(applicationGlobalId, trigger) {
     INSERT INTO scoring_results
       (application_id, score, risk_level, model_version, factors, reason_codes, trigger, version)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    UPDATE user_id SET risk_score = ? WHERE inn = ?
   `).run(
     applicationGlobalId, risk.score, risk.riskLevel, 'scoring_v1',
     JSON.stringify(risk.reasons), JSON.stringify(risk.reasonCodes || []),
-    trigger, nextVersion
+    trigger, nextVersion, score, inn
   );
 
   return risk;
