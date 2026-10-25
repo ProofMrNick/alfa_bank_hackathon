@@ -22,7 +22,10 @@ router.post('/register', (req, res) => {
 
         // create a token, take JWT secret from .env file, and set the expiration time to 24 hours
         const token = jwt.sign({ id: result.lastInsertRowid }, process.env.JWT_SECRET, { expiresIn: '24h' })
-        res.json({ token })
+        const getUser = db.prepare('SELECT * FROM users WHERE username = ?')
+        const user = getUser.get(username)
+        const userRole = user.role
+        res.json({ token, userRole})
     } catch (err) {
         console.log(err.message)
         res.sendStatus(503)
@@ -49,7 +52,8 @@ router.post('/login', (req, res) => {
 
         // then we have a successful authentication
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' })
-        res.json({ token })
+        const userRole = user.role
+        res.json({ token, userRole})
     } catch (err) {
         console.log(err.message)
         res.sendStatus(503)
