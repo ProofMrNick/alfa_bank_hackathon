@@ -1,0 +1,386 @@
+
+.app-page {
+  min-height: 100vh;
+  background-color: var(--color-light-grey-gb);
+  font-family: var(--font-regular);
+  color: var(--color-text);
+  box-sizing: border-box;
+  padding: 24px 32px;
+  position: relative;
+}
+
+/* кнопка выхода справа вверху */
+.app-logout {
+  position: absolute;
+  top: 24px;
+  right: 32px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--color-text);
+}
+.app-logout:hover { background-color: var(--color-light-grey); }
+
+.app-body {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
+
+/* ---------- левая панель (клон дашборда) ---------- */
+.app-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.app-logo-img {
+  width: fit-content;
+  padding-bottom: 4px;
+  margin-bottom: 60px;
+}
+
+.app-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.app-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  text-decoration: none;
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.app-nav-item:hover { background-color: #ffffff; }
+
+/* ---------- основная область ---------- */
+.app-main { flex: 1; min-width: 0; }
+
+.app-back-pill {
+  border: none;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 12px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--color-text);
+  margin-bottom: 18px;
+}
+.app-back-pill:hover { background-color: var(--color-light-grey); }
+
+.app-note { color: var(--color-dark-grey); font-size: 14px; }
+.app-note-error { color: var(--color-error-text); }
+
+/* ---------- белая карточка заявки ---------- */
+.app-card {
+  background-color: #ffffff;
+  border-radius: 24px;
+  padding: 32px 36px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.app-card-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.app-title {
+  font-family: var(--font-title);
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--color-dark);
+}
+.app-subtitle {
+  font-size: 13px;
+  color: var(--color-dark-grey);
+  margin: 4px 0 18px 0;
+}
+
+.app-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+.app-summary-amount {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-dark);
+}
+.app-summary-term {
+  font-size: 14px;
+  color: var(--color-dark-grey);
+}
+.app-summary-product {
+  font-size: 14px;
+  color: var(--color-dark-grey);
+  margin-bottom: 24px;
+}
+
+/* ---------- бейджи статусов ---------- */
+.app-badge {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.badge-gray     { background-color: var(--color-grey); color: var(--color-dark-grey); }
+.badge-pending  { background-color: var(--color-pending-bg); color: var(--color-pending-text); }
+.badge-success  { background-color: var(--color-success-bg); color: var(--color-success-text); }
+.badge-error    { background-color: var(--color-error-bg); color: var(--color-error-text); }
+.badge-counter  { background-color: #ECE6F9; color: #6B46C1; }
+
+/* ---------- центр карточки ---------- */
+.app-center {
+  max-width: 520px;
+}
+.app-center-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-dark);
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+.app-center-muted {
+  font-size: 15px;
+  color: var(--color-dark-grey);
+  margin: 8px 0 16px 0;
+}
+
+/* красная кнопка */
+.app-btn-red {
+  border: none;
+  border-radius: 10px;
+  background-color: var(--color-red-buttons);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 14px 28px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.app-btn-red:hover { filter: brightness(0.92); }
+.app-btn-red:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* вторичная кнопка (отклонить) */
+.app-btn-ghost {
+  border: 1px solid var(--color-grey);
+  border-radius: 10px;
+  background-color: #ffffff;
+  color: var(--color-dark);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 14px 24px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.app-btn-ghost:hover { background-color: var(--color-light-grey); }
+.app-btn-ghost:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.app-two-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ---------- предложение / контр-оффер ---------- */
+.app-offer {
+  background-color: var(--color-light-grey);
+  border-radius: 14px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.app-offer-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-dark);
+  margin-bottom: 14px;
+}
+.app-offer-params {
+  display: flex;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.app-offer-param { display: flex; flex-direction: column; gap: 4px; }
+.app-offer-label { font-size: 12px; color: var(--color-dark-grey); }
+.app-offer-value { font-size: 18px; font-weight: 700; color: var(--color-dark); }
+.app-offer-comment {
+  font-size: 13px;
+  color: var(--color-dark-grey);
+  margin: 12px 0 0 0;
+  line-height: 1.4;
+}
+
+/* сравнение "запрашивали / предлагают" */
+.app-compare {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.app-compare-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  min-width: 160px;
+}
+.app-compare-new {
+  background-color: var(--color-success-bg);
+}
+.app-compare-label { font-size: 12px; color: var(--color-dark-grey); }
+.app-compare-value { font-size: 18px; font-weight: 700; color: var(--color-dark); }
+.app-compare-sub { font-size: 13px; color: var(--color-dark-grey); }
+
+/* ---------- отказ ---------- */
+.app-decline-reason {
+  font-size: 14px;
+  color: var(--color-error-text);
+  margin: 0 0 12px 0;
+}
+.app-reasons, .app-tips {
+  list-style: none;
+  margin: 0 0 16px 0;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.app-reasons li { color: var(--color-dark); margin-bottom: 4px; }
+.app-tips li { color: var(--color-dark-grey); margin-bottom: 4px; }
+
+/* ---------- форма дозаполнения (три группы) ---------- */
+.app-missing { max-width: 560px; }
+.app-missing-lead {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-dark);
+  margin: 0 0 16px 0;
+}
+.app-field-group {
+  background-color: var(--color-light-grey);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.app-field-group-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--color-dark-grey);
+  margin-bottom: 12px;
+}
+.app-field-group-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.app-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.app-field-label {
+  font-size: 12px;
+  color: var(--color-dark-grey);
+}
+.app-field-input {
+  border: none;
+  border-bottom: 2px solid var(--color-grey-input-underline);
+  border-radius: 5px 5px 0 0;
+  background-color: #ffffff;
+  padding: 12px 14px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  color: var(--color-text);
+}
+.app-field-input::placeholder { color: var(--color-input-text); }
+
+/* ---------- правый таймлайн ---------- */
+.app-stepper {
+  width: 240px;
+  flex-shrink: 0;
+  padding-top: 6px;
+}
+.app-step {
+  display: flex;
+  gap: 14px;
+  position: relative;
+}
+.app-step-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 16px;
+  flex-shrink: 0;
+}
+.app-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.app-dot-done { background-color: var(--color-alfa-red); }
+.app-dot-active {
+  background-color: var(--color-alfa-red);
+  box-shadow: 0 0 0 4px rgba(249, 58, 43, 0.25);
+}
+.app-dot-future { background-color: var(--color-grey); }
+
+.app-line {
+  width: 2px;
+  flex: 1;
+  min-height: 36px;
+  background-color: var(--color-grey);
+  margin: 4px 0;
+}
+.app-line-red { background-color: var(--color-alfa-red); }
+
+.app-step-text { padding-bottom: 22px; }
+.app-step-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-dark);
+}
+.app-step-future { color: var(--color-dark-grey); font-weight: 400; }
+.app-step-date {
+  font-size: 12px;
+  color: var(--color-dark-grey);
+  margin-top: 2px;
+}
