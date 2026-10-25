@@ -9,7 +9,7 @@ import clientRoutes from './routes/clientRoutes.js'
 import bankRoutes from './routes/bankRoutes.js'
 import healthRoutes from './routes/healthRoutes.js'
 import mocksRoutes from './routes/mocksRoutes.js'
-import authMiddleware from './middleware/authMiddleware.js'
+import authMiddleware from './middleware/authMiddleWare.js'
 import fill_db, { runAutoTests } from './fill_db.js'
 const app = express()
 const PORT = process.env.PORT || 5003

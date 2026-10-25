@@ -1,0 +1,8 @@
+{
+  "model_name": "rule_based_approval_scoring",
+  "version": "approval_rules_v1.0.0",
+  "annual_revenue_limit_share": 0.25,
+  "monthly_inflow_multiple": 6.0,
+  "existing_debt_deduction_share": 0.15,
+  "probability_kind": "heuristic_not_calibrated"
+}
