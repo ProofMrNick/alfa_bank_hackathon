@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 
 
-const API_URL = "http://localhost:5003";
+const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 function Login() {
   const [login, setLogin] = useState("");
@@ -57,6 +57,7 @@ function Login() {
           navigate("/");
         }
       } else {
+        console.log("ЛОГИН 401, тело ответа:", data);
         setError(data.message || data.error || "Неверный логин или пароль");
       }
     } catch (e) {
