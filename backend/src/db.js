@@ -16,7 +16,7 @@ db.exec(`
         global_id INTEGER PRIMARY KEY AUTOINCREMENT,
         local_id INTEGER,
         user_id INTEGER,
-        user_inn INTEGER,
+        inn TEXT,
         loan_id INTEGER,
 
         loan_sum INTEGER,
@@ -27,10 +27,10 @@ db.exec(`
         status TEXT DEFAULT 'CREATED',
         
 
-        FOREIGN KEY(user_inn) REFERENCES user_info(inn), 
+        FOREIGN KEY(inn) REFERENCES user_info(inn), 
         FOREIGN KEY(user_id) REFERENCES users(id),
         FOREIGN KEY(loan_id) REFERENCES loans(id)
-        )    ;
+        ) 
 `)
 db.exec(`UPDATE sqlite_sequence SET seq = 432889 WHERE name = 'applications'`)
 
@@ -89,4 +89,45 @@ db.exec(`
     END;
 `)
 
+db.exec(`
+    CREATE TABLE recommended_loans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    loan_Id INTEGER,
+    approval_probability INTEGER,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY(loan_id) REFERENCES loans(id) ON DELETE CASCADE
+    )
+`)
+
+db.exec(`
+    CREATE TABLE scoring_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    application_id INTEGER NOT NULL,
+    score INTEGER,
+    risk_level TEXT,
+    default_probability REAL,
+    model_version TEXT,
+    factors TEXT,
+    reason_codes TEXT,
+    trigger TEXT,        -- SUBMIT | CLARIFY | ENRICHMENT | PRE_DECISION
+    version INTEGER,     -- 1, 2, 3...
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (application_id) REFERENCES applications (id)
+    )
+`)
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS registry_internal (
+    inn                          TEXT PRIMARY KEY,
+    has_account                  INTEGER NOT NULL,
+    account_opened_date          TEXT,
+    avg_monthly_inflow           REAL,
+    avg_monthly_outflow          REAL,
+    acquiring_monthly_volume     REAL,
+    blocked_115fz                INTEGER NOT NULL DEFAULT 0,
+    previous_products_closed_well INTEGER,
+    snapshot_date                TEXT
+)
+`)
 export default db
