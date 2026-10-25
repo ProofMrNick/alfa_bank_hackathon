@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/ClientDashboard.css';
@@ -6,19 +7,25 @@ const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 
 const STATUS_MAP = {
-  DRAFT: { label: "Черновик", cls: "badge-gray" },
-  SUBMITTED: { label: "Отправлена", cls: "badge-blue" },
-  ENRICHMENT: { label: "Проверяем данные", cls: "badge-blue" },
-  SCORING: { label: "Оцениваем заявку", cls: "badge-blue" },
-  UNDER_REVIEW: { label: "В рассмотрении", cls: "badge-gray" },
-  NEED_MORE_INFO: { label: "Нужны данные", cls: "badge-orange" },
-  COUNTEROFFER: { label: "Есть предложение", cls: "badge-purple" },
-  APPROVED: { label: "Одобрено", cls: "badge-green" },
-  DECLINED: { label: "Отказано", cls: "badge-red" },
-  COMPLETED: { label: "Завершена", cls: "badge-green" },
+  DRAFT:        { label: "Черновик",              cls: "badge-gray" },
+  CREATED:      { label: "Создана",               cls: "badge-pending" },
+  SUBMITTED:    { label: "Отправлена",            cls: "badge-pending" },
+  ENRICHMENT:   { label: "Проверяем данные",      cls: "badge-pending" },
+  SCORING:      { label: "Оцениваем заявку",      cls: "badge-pending" },
+  PENDING:      { label: "На рассмотрении",       cls: "badge-pending" },
+  UNDER_REVIEW: { label: "В рассмотрении",        cls: "badge-pending" },
+  CLARIFIED:    { label: "Данные обновлены",      cls: "badge-pending" },
+  NEED_INFO:    { label: "Нужны данные",          cls: "badge-orange" },
+  REQUEST_INFO: { label: "Нужны данные",          cls: "badge-orange" },
+  COUNTEROFFER: { label: "Есть предложение",      cls: "badge-purple" },
+  APPROVED:     { label: "Одобрено",              cls: "badge-green" },
+  DECLINED:     { label: "Отказано",              cls: "badge-red" },
+  REJECTED:     { label: "Отказано",              cls: "badge-red" },
+  COMPLETED:    { label: "Завершена",             cls: "badge-green" },
+  CANCELLED:    { label: "Отменена",              cls: "badge-gray" },
 }
 
-// типы сообщений в ленте
+
 const FEED_TYPE_MAP = {
   STATUS_UPDATE: "Статус по заявке",
   ACTION_REQUIRED: "Нужно действие",
@@ -27,14 +34,51 @@ const FEED_TYPE_MAP = {
   TIP: "Подсказка",
 }
 
+const FEED_STATUS_TITLE = {
+  CREATED: "Заявка создана",
+  SUBMITTED: "Заявка отправлена",
+  PENDING: "Заявка на стадии рассмотрения",
+  UNDER_REVIEW: "Заявка на стадии рассмотрения",
+  ENRICHMENT: "Проверяем данные",
+  SCORING: "Оцениваем заявку",
+  NEED_INFO: "Нужны дополнительные данные",
+  REQUEST_INFO: "Нужны дополнительные данные",
+  CLARIFIED: "Данные обновлены",
+  COUNTEROFFER: "Банк предложил другие условия",
+  APPROVED: "Кредит одобрен",
+  DECLINED: "Отказ в предоставлении кредита",
+  REJECTED: "Отказ в предоставлении кредита",
+  COMPLETED: "Кредит оформлен",
+  CANCELLED: "Заявка отменена",
+}
+
+
+const FEED_STATUS_TEXT = {
+  CREATED: "Мы приняли вашу заявку и начали обработку.",
+  SUBMITTED: "Заявка отправлена в банк.",
+  PENDING: "Банк рассматривает вашу заявку. Никаких действий не требуется.",
+  UNDER_REVIEW: "Банк рассматривает вашу заявку. Никаких действий не требуется.",
+  ENRICHMENT: "Проверяем данные компании по внешним источникам.",
+  SCORING: "Оцениваем кредитный риск по заявке.",
+  NEED_INFO: "Заполните недостающие данные, чтобы продолжить рассмотрение.",
+  REQUEST_INFO: "Заполните недостающие данные, чтобы продолжить рассмотрение.",
+  CLARIFIED: "Вы обновили данные, заявка снова на рассмотрении.",
+  COUNTEROFFER: "Банк предложил скорректированные условия. Посмотрите детали в заявке.",
+  APPROVED: "Банк готов предложить финансирование. Посмотрите условия в заявке.",
+  DECLINED: "К сожалению, банк не смог одобрить финансирование.",
+  REJECTED: "К сожалению, банк не смог одобрить финансирование.",
+  COMPLETED: "Предложение принято, кредит оформлен (выдача смоделирована).",
+  CANCELLED: "Вы отклонили предложение банка.",
+}
+
 function formatMoney(value) {
   if (value === null || value === undefined) return "—"
   return Number(value).toLocaleString("ru-RU") + " ₽"
 }
 
 
+// ---------- нормализаторы пользователя / компании ----------
 
-// normalizers for raw data
 function normalizeUserFromInfo(info) {
   if (!info) return null
   return {
@@ -45,7 +89,6 @@ function normalizeUserFromInfo(info) {
   }
 }
 
-
 function normalizeCompanyFromInfo(info) {
   if (!info) return null
   return {
@@ -54,11 +97,10 @@ function normalizeCompanyFromInfo(info) {
   }
 }
 
-// продукт из recommendations -> поля для OfferCard.
-// Работает в двух режимах:
-//   1) каталог (current): id / name / interest_rate / duration / max_amount, itemId нет
-//   2) остатки сессий подбора (future): itemId / preliminaryLimit / preliminaryRate / termMonths
-// Через ?? берём первое непустое, поэтому одна функция годится для обоих.
+
+// ---------- продукт из recommendations -> поля для OfferCard ----------
+// режим 1 (сейчас): каталог id/name/interest_rate/duration/max_amount, itemId нет
+// режим 2 (потом):  остатки сессий itemId/preliminaryLimit/preliminaryRate/termMonths
 function normalizeOffer(raw) {
   return {
     id: raw.id ?? raw.productId ?? null,
@@ -74,32 +116,61 @@ function normalizeOffer(raw) {
 }
 
 
-function normalizeApplication(raw) {
-  console.log("application raw:", raw)
+// ---------- заявка из applications -> поля для ApplicationCard ----------
+// productMap: { [loan_id]: name } из /api/products, чтобы дотянуть название
+// продукта, которого бэкенд не кладёт в отдачу дашборда.
+// ВАЖНО: клиентский id = local_id (по нему работает /applications/:id),
+// global_id храним отдельно - он нужен только для связи с лентой.
+function normalizeApplication(raw, productMap) {
+  const map = productMap || {}
   return {
-    id: raw.id ?? raw.global_id ?? null,
-    number: raw.number ?? raw.local_id ?? null,
+    id: raw.local_id ?? raw.id ?? null,            // <- для перехода на /applications/:id
+    globalId: raw.global_id ?? null,               // <- для резолва ленты
+    number: raw.local_id ?? raw.number ?? null,
     status: raw.status ?? "",
-    amount: raw.amount ?? raw.loan_sum ?? null,
-    termMonths: raw.termMonths ?? raw.loan_duration ?? null,
-    rate: raw.rate ?? raw.loan_interest ?? null,
-    productName: raw.productName ?? raw.loan_name ?? raw.product_name ?? "",
+    amount: raw.loan_sum ?? raw.amount ?? null,
+    termMonths: raw.loan_duration ?? raw.termMonths ?? null,
+    rate: raw.loan_interest ?? raw.rate ?? null,
+    // название продукта: сначала то, что дал бэк, потом карта из /products
+    productName: raw.loan_name ?? raw.product_name ?? raw.productName ?? map[raw.loan_id] ?? "",
+    purpose: raw.purpose ?? "",                    // на будущее: если бэк добавит цель
+    createdAt: raw.time_of_application ?? raw.created_at ?? null,
   }
 }
 
 
-function normalizeFeedItem(raw, index) {
-  console.log("feed raw:", raw)
+// ---------- элемент ленты (лог смены статуса) -> поля для FeedCard ----------
+// appsList - уже нормализованные заявки, чтобы по application_global_id
+// собрать сабтайтл "Заявка № X на Y ₽" как на макете.
+function normalizeFeedItem(raw, appsList, index) {
+  const linked = (appsList || []).find(function (a) {
+    return a.globalId != null && a.globalId === raw.application_global_id
+  })
+
+  let subtitle = null
+  if (linked) {
+    subtitle = "Заявка № " + linked.number + " на " + formatMoney(linked.amount)
+  } else if (raw.application_global_id != null) {
+    subtitle = "Заявка (id " + raw.application_global_id + ")"
+  }
+
+  const status = raw.new_status ?? raw.status ?? ""
+  const title = FEED_STATUS_TITLE[status] ?? status
+  // comment бэкенда приоритетнее дефолта; null ?? text -> text
+  const text = raw.comment ?? FEED_STATUS_TEXT[status] ?? ""
+
   return {
-    id: raw.id ?? raw.event_id ?? index,
-    type: raw.event_type ?? raw.type ?? "STATUS_UPDATE",
-    subtitle: raw.application_summary ?? raw.subtitle ?? null,
-    title: raw.title ?? raw.event_title ?? "",
-    text: raw.message ?? raw.text ?? raw.description ?? "",
+    id: raw.id ?? index,
+    type: "STATUS_UPDATE",
+    subtitle: subtitle,
+    title: title,
+    text: text,
+    time: raw.timestamp ?? null,   // держим про запас; в карточке не показываем (по макету)
   }
 }
 
 
+// ---------- карточки ----------
 
 function ApplicationCard(props) {
   const app = props.app
@@ -115,7 +186,7 @@ function ApplicationCard(props) {
       </div>
 
       <div className="dash-app-amount">{formatMoney(app.amount)}</div>
-      <div className="dash-app-product">{app.productName}</div>
+      {app.productName ? <div className="dash-app-product">{app.productName}</div> : null}
 
       <button className="dash-btn-red" onClick={() => props.onOpen(app.id)}>Открыть</button>
     </div>
@@ -131,12 +202,11 @@ function FeedCard(props) {
     <div className="dash-feed-card">
       <div className="dash-feed-type">{typeLabel}</div>
       {item.subtitle ? <div className="dash-feed-sub">{item.subtitle}</div> : null}
-      <div className="dash-feed-title">{item.title}</div>
-      <div className="dash-feed-text">{item.text}</div>
+      {item.title ? <div className="dash-feed-title">{item.title}</div> : null}
+      {item.text ? <div className="dash-feed-text">{item.text}</div> : null}
     </div>
   )
 }
-
 
 
 function OfferCard(props) {
@@ -178,6 +248,7 @@ function OfferCard(props) {
 }
 
 
+// ---------- страница ----------
 
 function ClientDashboard() {
   const [user, setUser] = useState(null)
@@ -201,41 +272,80 @@ function ClientDashboard() {
     setLoading(true)
     setError("")
 
+    const token = localStorage.getItem("token")
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    }
+
     try {
-      const token = localStorage.getItem("token")
+      // ПРАВКА: дашборд и справочник продуктов грузим параллельно (Promise.all),
+      // чтобы карта loan_id -> name была готова ДО нормализации заявок
+      // (иначе была бы гонка и productName снова пустой).
+      const [dashRes, prodRes] = await Promise.all([
+        fetch(API_URL + "/api/client/dashboard", { headers }),
+        fetch(API_URL + "/api/products", { headers }).catch(function (e) {
+          console.error("products упал (не критично):", e)
+          return null
+        }),
+      ])
 
-      const response = await fetch(API_URL + "/api/client/dashboard", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-      })
-
-      if (response.status === 401) {
+      if (dashRes.status === 401) {
         localStorage.removeItem("token")
         localStorage.removeItem("user")
         navigate("/login")
         return
       }
 
-      const rawText = await response.text()
+      const dashText = await dashRes.text()
       let data = null
       try {
-        data = JSON.parse(rawText)
+        data = JSON.parse(dashText)
       } catch (parseErr) {
-        console.error("Ответ не JSON. Статус:", response.status, "Тело:", rawText.slice(0, 200))
+        console.error("dashboard: ответ не JSON", dashRes.status, dashText.slice(0, 200))
         throw parseErr
       }
 
-      if (response.ok) {
-        setUser(normalizeUserFromInfo(data.userInfo))
-        setCompany(normalizeCompanyFromInfo(data.userInfo))
-        setApplications((data.applications || []).map(normalizeApplication))
-        setFeed((data.latestApplicationsLog || []).map(normalizeFeedItem))
-        setOffers((data.recommendations || []).map(normalizeOffer))
-      } else {
-        setError(data.message || "Не удалось загрузить данные")
+      if (!dashRes.ok) {
+        setError((data && data.message) || "Не удалось загрузить данные")
+        setLoading(false)
+        return
       }
+
+      // строим карту id продукта -> name из /api/products
+      let productMap = {}
+      if (prodRes && prodRes.ok) {
+        try {
+          const prodText = await prodRes.text()
+          const prodData = JSON.parse(prodText)
+          const list = Array.isArray(prodData) ? prodData : (prodData.products || prodData.loans || [])
+          for (let i = 0; i < list.length; i++) {
+            const p = list[i]
+            const pid = p.id ?? p.product_id ?? p.loan_id
+            const pname = p.name ?? p.product_name ?? p.title ?? ""
+            if (pid != null) productMap[pid] = pname
+          }
+        } catch (e) {
+          console.error("products parse:", e)
+        }
+      }
+
+      setUser(normalizeUserFromInfo(data.userInfo))
+      setCompany(normalizeCompanyFromInfo(data.userInfo))
+
+      // заявки нормализуем ПЕРВЫМИ (нужна productMap и globalId для ленты)
+      const appsNorm = (data.applications || []).map(function (raw) {
+        return normalizeApplication(raw, productMap)
+      })
+      setApplications(appsNorm)
+
+      // ленту нормализуем ВТОРЫМИ (нужен appsNorm для сабтайтла)
+      const feedNorm = (data.latestApplicationsLog || []).map(function (raw, idx) {
+        return normalizeFeedItem(raw, appsNorm, idx)
+      })
+      setFeed(feedNorm)
+
+      setOffers((data.recommendations || []).map(normalizeOffer))
     } catch (e) {
       console.error("fetch упал:", e)
       setError("Сервер недоступен. Попробуйте обновить страницу")
@@ -250,10 +360,7 @@ function ClientDashboard() {
   }
 
 
-  // оформление предложения прямо на дашборде.
-  // Работает ТОЛЬКО по itemId (остатки сессий подбора). Если itemId нет —
-  // значит бэкенд отдаёт голый каталог, и корректную заявку по нему создать
-  // нельзя (нет суммы/срока/цели клиента) -> честно ведём в подбор.
+  // оформление по itemId (остатки сессий). Без itemId -> честно в подбор.
   async function handleApplyProduct(rec) {
     if (!rec.itemId) {
       navigate("/smart-selection")
@@ -265,7 +372,6 @@ function ClientDashboard() {
 
     try {
       const token = localStorage.getItem("token")
-
       const response = await fetch(API_URL + "/api/applications/quick", {
         method: "POST",
         headers: {
@@ -283,9 +389,7 @@ function ClientDashboard() {
 
       const raw = await response.text()
       let data = null
-      try {
-        data = JSON.parse(raw)
-      } catch (e) {
+      try { data = JSON.parse(raw) } catch (e) {
         console.error("quick: ответ не JSON", response.status, raw.slice(0, 200))
         throw e
       }
