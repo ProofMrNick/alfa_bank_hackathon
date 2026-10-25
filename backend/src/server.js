@@ -5,12 +5,11 @@ import { fileURLToPath } from 'url'
 import authRoutes from './routes/authRoutes.js'
 import applicationsRoutes from './routes/applicationsRoutes.js'
 import productsRoutes from './routes/productsRoutes.js'
-import recommendationsRoutes from './routes/recommendationsRoutes.js'
 import clientRoutes from './routes/clientRoutes.js'
 import bankRoutes from './routes/bankRoutes.js'
 import healthRoutes from './routes/healthRoutes.js'
 import mocksRoutes from './routes/mocksRoutes.js'
-import authMiddleware from './middleware/authMiddleware.js'
+import authMiddleware from './middleware/authMiddleWare.js'
 import fill_db, { runAutoTests } from './fill_db.js'
 const app = express()
 const PORT = process.env.PORT || 5003
@@ -35,7 +34,6 @@ app.use(express.static(path.join(__dirname, '../public')))
 // Routes
 app.use('/api/applications',  authMiddleware("CLIENT"), applicationsRoutes) // private route, auth required, return middleware back
 app.use('/api/client', authMiddleware("CLIENT"), clientRoutes) // private route, auth required, return middleware back
-app.use('/api/recommendations', authMiddleware("CLIENT"), recommendationsRoutes) // private route, auth required, return middleware back
 app.use('/api/bank', authMiddleware("EMPLOYEE"), bankRoutes) // private route, auth required, return middleware back
 
 app.use('/api/auth', authRoutes)
