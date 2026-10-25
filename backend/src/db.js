@@ -113,7 +113,7 @@ db.exec(`
     trigger TEXT,        -- SUBMIT | CLARIFY | ENRICHMENT | PRE_DECISION
     version INTEGER,     -- 1, 2, 3...
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (application_id) REFERENCES applications (id)
+    FOREIGN KEY (application_id) REFERENCES applications (global_id)
     )
 `)
 

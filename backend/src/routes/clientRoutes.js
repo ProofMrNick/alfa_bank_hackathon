@@ -51,4 +51,5 @@ router.get('/recommendations', (req, res) => {
     res.json(recommendedLoans)
 })
 
+
 export default router
