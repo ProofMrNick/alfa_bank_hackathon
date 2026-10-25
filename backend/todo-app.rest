@@ -26,8 +26,8 @@ POST {{baseUrl}}/auth/register
 Content-Type: application/json
 
 {
-  "username": "client@test.local",
-  "password": "password123",
+  "username": "client",
+  "password": "12345678",
   "email": "client@test.local",
   "inn": "7700000001",
   "companyName": "ИП Клиентов И.И."

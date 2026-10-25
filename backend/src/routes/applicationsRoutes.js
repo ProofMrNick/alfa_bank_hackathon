@@ -57,11 +57,15 @@ router.get('/:local_id/history', (req, res) => {
 router.post('/:applId/submit', (req, res) => {
     const { applId } = req.params
     const userId = req.userId
+    const getUserInn = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`)
+    const userInn = getUserInn.get(userId).inn
+
+    if (!userInn) { return res.status(404).send({ message: "INN not found" }) }
     const {loan_id, loan_sum, loan_interest, loan_duration} = req.body
     console.log(`submitting application with id: ${applId} for user: ${userId}, ${loan_id}, ${loan_duration}, ${loan_interest}, ${loan_sum}`)
     
-    const createApplication = db.prepare(`INSERT INTO applications (user_id, local_id, loan_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?)`)
-    createApplication.run(userId, applId, loan_id, loan_sum, loan_interest, loan_duration)
+    const createApplication = db.prepare(`INSERT INTO applications (user_id, user_inn, local_id, loan_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    createApplication.run(userId, userInn, applId, loan_id, loan_sum, loan_interest, loan_duration)
 
     const row = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`).get(userId)
     const inn = row.inn
@@ -69,9 +73,6 @@ router.post('/:applId/submit', (req, res) => {
     const bki_info = bki_db.prepare(`SELECT * FROM bki WHERE inn = ?`).get(inn)
     res.status(201).send({message: "Application created"})
 
-    const user_risk_score =  900
-    const updateRiskScore = db.prepare(`UPDATE user_info SET risk_score = ? WHERE user_id = ? `)
-    updateRiskScore.run(user_risk_score, userId)
 
     const updateApplication = db.prepare(`UPDATE applications SET status = ? WHERE user_id = ? AND local_id = ?`)
     updateApplication.run('PENDING', userId, applId)

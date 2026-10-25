@@ -24,8 +24,8 @@ router.post('/register', (req, res) => {
         const token = jwt.sign({ id: result.lastInsertRowid }, process.env.JWT_SECRET, { expiresIn: '24h' })
         const getUser = db.prepare('SELECT * FROM users WHERE username = ?')
         const user = getUser.get(username)
-        const userRole = user.role
-        res.json({ token, userRole})
+        const role = user.role
+        res.json({ token, role})
     } catch (err) {
         console.log(err.message)
         res.sendStatus(503)
@@ -52,8 +52,8 @@ router.post('/login', (req, res) => {
 
         // then we have a successful authentication
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' })
-        const userRole = user.role
-        res.json({ token, userRole})
+        const role = user.role
+        res.json({ token, role})
     } catch (err) {
         console.log(err.message)
         res.sendStatus(503)
