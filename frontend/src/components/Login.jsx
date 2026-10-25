@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import '../styles/Login.css';
 
 
-const API_URL = "http://localhost:5003";
+const API_URL = import.meta.env.LOCAL_API_URL;
 
 function Login() {
   const [login, setLogin] = useState("");
