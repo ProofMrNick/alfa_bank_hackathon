@@ -2,7 +2,7 @@ import express, { application } from 'express'
 import db from '../db.js'
 import bki_db from '../../mockDatabase/bki_db.js'
 import fns_db from '../../mockDatabase/fns_db.js'
-
+import { runInitialMLAssertion } from '../mlAssertion.js'
 const router = express.Router()
 
 // Get all applications for the authenticated user
@@ -47,7 +47,6 @@ router.post('/:applId/submit', (req, res) => {
     const userId = req.userId
     const inn = req.inn
 
-    if (!inn) { return res.status(404).send({ message: "INN not found" }) }
     const {loan_sum, loan_interest, loan_duration} = req.body
     console.log(`submitting application with id: ${applId} for user: ${userId}, ${loan_duration}, ${loan_interest}, ${loan_sum}`)
     
@@ -57,20 +56,26 @@ router.post('/:applId/submit', (req, res) => {
     const createApplication = db.prepare(`INSERT INTO applications (user_id, inn, local_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?)`)
     createApplication.run(userId, inn, applId, loan_sum, loan_interest, loan_duration)
 
-    res.status(201).send({message: "Application created"})
 
     const application = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND local_id = ?`).get(userId, applId)
 
+    const userInfo = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`).get(userId)
     const bki     = bki_db.prepare('SELECT * FROM bki WHERE inn = ?').get(inn);
     const fns     = fns_db.prepare('SELECT * FROM fns WHERE inn = ?').get(inn);
     const internal_registry = db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(inn);
     const risk_score = db.prepare('SELECT * FROM user_info WHERE user_id = ?').get(userId).risk_score
     //do smting
-    //run_initial_ML_assertion(application, bki, fns, internal_registry, risk_score)
+     runInitialMLAssertion(application, bki, fns, internal_registry, userInfo.risk_score)
+        .catch(err => console.error('ML assertion failed:', err.message))
+    
     const deleteFromRecommendations = db.prepare(`DELETE FROM recommended_loans WHERE user_id = ? AND loan_sum = ? AND loan_interest = ? AND loan_duration = ?`)
-    deleteFromRecommendations.run(userId, loan_sum, loan_duration, loan_interest)
+    deleteFromRecommendations.run(userId, loan_sum, loan_interest, loan_duration)
 
-
+        res.status(201).json({
+        success: true,
+        message: "Заявка подана, ML обрабатывает",
+        data: { application_id: application.global_id, local_id: applId }
+    })
 })
 
 router.post('/:applId/acceptOffer', (req, res) =>{
