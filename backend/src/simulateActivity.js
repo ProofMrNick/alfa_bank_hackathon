@@ -39,16 +39,16 @@ export async function simulateActivity() {
     
     const clients = [
         // ХОРОШИЙ клиент
-        { username: 'ivanov', password: process.env.CLIENT_PASSWORD1, email: 'ivanov@test.local', 
+        { username: 'ivanov', password: process.env.CLIENT_PASSWORD1 || process.env.CLIENT_PASSWORD, email: 'ivanov@test.local', 
           inn: '7700000001', companyName: 'ООО "Вектор"' },
         // ПЛОХОЙ клиент
-        { username: 'petrov', password: process.env.CLIENT_PASSWORD2, email: 'petrov@test.local', 
+        { username: 'petrov', password: process.env.CLIENT_PASSWORD2 || process.env.CLIENT_PASSWORD, email: 'petrov@test.local', 
           inn: '7700000002', companyName: 'ООО "Вектор-Трейд"' },
         // СРЕДНИЙ клиент
-        { username: 'sidorov', password: process.env.CLIENT_PASSWORD3, email: 'sidorov@test.local', 
+        { username: 'sidorov', password: process.env.CLIENT_PASSWORD3 || process.env.CLIENT_PASSWORD, email: 'sidorov@test.local', 
           inn: '7700000003', companyName: 'ИП Сидоров А.М.' },
         // НЕДОСТАТОК ДАННЫХ (новый клиент)
-        { username: 'novikov', password: process.env.CLIENT_PASSWORD4, email: 'novikov@test.local', 
+        { username: 'novikov', password: process.env.CLIENT_PASSWORD4 || process.env.CLIENT_PASSWORD, email: 'novikov@test.local', 
           inn: '7700000004', companyName: 'ООО "Старт"' }
     ];
     
