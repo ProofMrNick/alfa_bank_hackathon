@@ -12,18 +12,6 @@ router.get('/', (req, res) => {
     res.json(applications)
 })
 
-/// Create a new application v 1.0
-/*router.post('/', (req, res) => {
-    
-    const { loan_id } = req.body
-    const application_id = db.prepare('SELECT MAX(application_id) as max_id FROM applications WHERE user_id = ?').get(req.userId).max_id || 0 // get the max application_id for this user, or 0 if none exist
-    const insertApplication = db.prepare(`INSERT INTO applications (user_id, loan_id, application_id) VALUES (?, ?, ?)`)
-    insertApplication.run(req.userId, loan_id, application_id + 1)
-    res.status(201).send({ message: "Application created" })
-
-    })
-*/
-
 // View an application
 router.get('/:local_id', (req, res) => {
     const { local_id } = req.params
@@ -91,10 +79,11 @@ router.post('/:applId/clarify', (req, res) => {
     const { applId } = req.params
     const { bki_data = {}, fns_data = {}, internal_data = {} } = req.body
 
-    const appRow = db.prepare(`SELECT global_id FROM applications WHERE local_id = ? AND user_id = ?`).get(applId, userId)
+    const appRow = db.prepare(`SELECT * FROM applications WHERE local_id = ? AND user_id = ?`).get(applId, userId)
     if (!appRow) {
         return res.status(404).json({ error: "Заявка не найдена" })
     }
+    console.log(appRow)
     if (appRow.status != 'REQUEST_INFO'){
         return res.status(403).json({ error: "Заявка не нуждается в дополнительной информации" })
     }
@@ -161,9 +150,5 @@ router.post('/:applId/clarify', (req, res) => {
         message: "Данные успешно обновлены",
         data: { application_id: globalId, status: 'PENDING' }
     })
-})
-
-router.post('/quick', () => {
-
 })
 export default router

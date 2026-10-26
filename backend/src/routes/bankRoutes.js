@@ -83,15 +83,15 @@ router.post("/applications/:applId/decision", (req, res) => {
     else{
         return res.status(400).send({ message: "Invalid decision type" })
     }
-    rescoreUser(user_id, applId, type)
     res.sendStatus(200)
+    rescoreUser(user_id, applId, type)
 })
 
 router.get('/applications/:global_id/history', (req, res) => {
     const { global_id } = req.params
 
     
-    if(!globalId) { return res.status(404).send({ message: "Application not found" }) }
+    if(!global_id) { return res.status(404).send({ message: "Application not found" }) }
 
     const getApplicationLogs = db.prepare(`SELECT * FROM applications_logs WHERE application_global_id = ?`)
     const applicationLogs = getApplicationLogs.all(global_id)
@@ -101,12 +101,13 @@ router.get('/applications/:global_id/history', (req, res) => {
 
 })
 
-router.get('/clients/:inn', () => {
+router.get('/clients/:inn', (req, res) => {
+    const {inn} = req.params
     const user_info = db.prepare(`SELECT * FROM user_info WHERE inn = ?`).get(inn)
-    const bki     = bki_db.prepare('SELECT * FROM registry_bki WHERE inn = ?').get(inn);
-    const fns     = fns_db.prepare('SELECT * FROM registry_bki WHERE inn = ?').get(inn);
+    const bki     = bki_db.prepare('SELECT * FROM bki WHERE inn = ?').get(inn);
+    const fns     = fns_db.prepare('SELECT * FROM fns WHERE inn = ?').get(inn);
     const internal_registry = db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(inn);
-    const risk_score_history = db.prepare(`SELECT * FROM scoring_reslts where inn = ?`).get(inn)
+    const risk_score_history = db.prepare(`SELECT * FROM scoring_results where inn = ?`).get(inn)
     res.send(JSON.stringify(user_info, bki, fns, internal_registry, risk_score_history))
 })
 export default router
