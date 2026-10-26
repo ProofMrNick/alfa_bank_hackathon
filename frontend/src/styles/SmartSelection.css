@@ -264,7 +264,17 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 .ss-result-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-.ss-result-desc { font-size: 14px; color: #8a8a8a; margin-bottom: 18px; }
+.ss-result-desc { font-size: 14px; color: #5f5f5f; margin-bottom: 8px; line-height: 1.45; }
+.ss-ai-badge {
+  display: inline-flex;
+  padding: 4px 9px;
+  margin-bottom: 18px;
+  border-radius: 999px;
+  background: #f1edff;
+  color: #6548b5;
+  font-size: 11px;
+  font-weight: 600;
+}
 
 .ss-result-params {
   display: flex;

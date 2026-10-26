@@ -22,7 +22,11 @@ router.get('/dashboard', (req, res) => {
         latestApplicationsLog.push(applicationLog)
     }
 
-    const getRecommendedloans = db.prepare(`SELECT * FROM recommended_loans ORDER BY approval_probability DESC LIMIT 3`)
+    const inn = userInfo.inn
+
+    //for now, we will retun a random loan recommendation for the user, in the future we will implement a more complex recommendation system
+    // const getRecommendedloans = askML_ad_recommendations(json.stringify({applications, fns_info, bki_info}))
+    const getRecommendedloans = db.prepare(`SELECT * FROM loans ORDER BY RANDOM() LIMIT 3`)
     const recommendations = getRecommendedloans.all()
 
     res.json({ userInfo, applications, latestApplicationsLog, recommendations })
@@ -32,23 +36,18 @@ router.get('/recommendations', (req, res) => {
     const userId = req.userId
     const {loan_sum, loan_interest, loan_duration} = req.body
 
-    const userInfo = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`).get(userId)
-    const user_risk_score = userInfo.risk_score
+    const userInfo = db.aggregate(`SELECT * FROM user_info WHERE user_id = ?`, [userId])
+    const inn = userInfo.inn
+    const fns_info = fns_db.aggregate(`SELECT * FROM fns WHERE inn = ?`, [inn])
+    const bki_info = bki_db.aggregate(`SELECT * FROM bki WHERE inn = ?`, [inn])    
     
-    
-    const {recommendedLoans} =  askML(json.stringify({loan_sum, loan_interest, loan_duration, user_risk_score}))
+    const {user_risk_score, recommendedLoans} =  askML(json.stringify({loan_sum, loan_interest, loan_duration, fns_info, bki_info}))
+    //const user_risk_score =  900
+    const updateRiskScore = db.prepare(`UPDATE user_info SET risk_score = ? WHERE user_id = ? `)
+    updateRiskScore.run(user_risk_score, userId)
 
-    //remember first 4 recommended_loans for later use
-    let i = 1
-    for(const recommended_loan of recommendedLoans){
-        const preliminaryLimit = recommended_loan.preliminaryLimit
-        const preliminaryRate = recommended_loan.preliminaryRate
-        const termMonths = recommended_loan.termMonths
-        const approvalProbability = recommended_loan.approvalProbability
-        if(i>4) break
-        db.prepare(`INSERT INTO recommended_loans (user_id, loan_sum, loan_interest, loan_duration, approval_probability) VALUES (?, ?, ?, ?, ?)`).run(userId, preliminaryLimit, preliminaryRate, termMonths, approvalProbability)
-        i++
-    }
+    //remember recomended_loans for later use
+    db.prepare()
     res.json(recommendedLoans)
 })
 

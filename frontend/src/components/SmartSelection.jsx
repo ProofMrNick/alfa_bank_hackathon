@@ -35,15 +35,18 @@ function normalizeRecommendation(raw) {
     id: raw.id ?? raw.productId ?? raw.product_id ?? null,
     itemId: raw.itemId ?? raw.item_id ?? raw.recommendationItemId ?? null,
     productName: raw.name ?? raw.productName ?? raw.product_name ?? '',
-    description: raw.description ?? raw.purposeLabel ?? '',
+    description: raw.ai_explanation ?? raw.description ?? raw.purposeLabel ?? '',
     baseRate: raw.interest_rate ?? raw.interestRate ?? raw.baseRate ?? raw.preliminaryRate ?? raw.preliminary_rate ?? null,
     amount: raw.preliminary_limit ?? raw.preliminaryLimit ?? raw.max_amount ?? raw.maxAmount ?? null,
     termMonths: raw.duration ?? raw.termMonths ?? raw.term_months ?? null,
-    monthlyPayment: raw.monthly_payment ?? raw.monthlyPayment ?? null,
+    monthlyPayment:
+      raw.monthly_payment ?? raw.monthlyPayment ?? raw.estimated_monthly_payment ?? null,
     overpayment: raw.overpayment ?? raw.total_overpayment ?? raw.totalOverpayment ?? null,
     approvalProbability: raw.approval_probability ?? raw.approvalProbability ?? null,
     reasons: raw.reasons ?? [],
     warnings: raw.warnings ?? [],
+    llmUsed: raw.llm_used ?? raw.llmUsed ?? false,
+    llmModel: raw.llm_model ?? raw.llmModel ?? '',
   }
 }
 
@@ -64,6 +67,9 @@ function OfferResultCard(props) {
     <div className="ss-result-card">
       <div className="ss-result-name">{rec.productName}</div>
       {rec.description ? <div className="ss-result-desc">{rec.description}</div> : null}
+      {rec.llmUsed ? (
+        <div className="ss-ai-badge">Локальная LLM · {rec.llmModel}</div>
+      ) : null}
 
       <div className="ss-result-params">
         <div className="ss-param">
@@ -231,8 +237,6 @@ function SmartSelection() {
         throw e
       }
 
-      console.log('RAW recommendations:', JSON.stringify(data, null, 2)) // <-- сверь имена полей здесь
-
       if (response.ok) {
         const list = (data.recommendations || data.products || []).map(normalizeRecommendation)
         // сортируем по убыванию шанса одобрения (бэкенд должен отдать так же, но подстрахуемся)
@@ -261,7 +265,6 @@ function SmartSelection() {
 
     try {
       const token = localStorage.getItem('token')
-      // FIX POST ENDPOINT !!!
       const response = await fetch(API_URL + '/api/applications', {
         method: 'POST',
         headers: {
@@ -291,8 +294,6 @@ function SmartSelection() {
         console.error('create application: ответ не JSON', response.status, raw.slice(0, 200))
         throw e
       }
-
-      console.log('RAW create application:', JSON.stringify(data, null, 2)) // <-- сверь имя поля с id
 
       if (response.ok) {
         const newId = normalizeCreatedApplication(data)

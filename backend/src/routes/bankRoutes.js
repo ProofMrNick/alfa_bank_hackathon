@@ -2,7 +2,7 @@ import express from "express";
 import db from '../db.js'
 import bki_db from '../../mockDatabase/bki_db.js'
 import fns_db from '../../mockDatabase/fns_db.js'
-import { rescoreUser } from "../scoringServices.js";
+
 const router = express.Router()
 
 router.get("/applications", (req, res) => {
@@ -28,13 +28,12 @@ router.post("/applications/:applId/decision", (req, res) => {
     const {applId} = req.params
     const {type, approvedAmount = null, approvedTermMonths = null, approvedRate = null, missingFields = null, reason = null, comment = null} = req.body 
 
-    
+
 
     const getApplication = db.prepare("SELECT * FROM applications WHERE global_id = ?")
     const application = getApplication.get(applId)
     if(!application) { return res.status(404).send({ message: "Application not found" }) }
 
-    const user_id = application.user_id
     if (type == "APPROVE" || type == "COUNTEROFFER"){
         const updateStatus = db.prepare("UPDATE applications SET status = ?, loan_sum = ?, loan_interest = ?, loan_duration = ? WHERE global_id == ?")
         updateStatus.run(type, approvedAmount, approvedRate, approvedTermMonths, applId)
@@ -86,7 +85,6 @@ router.post("/applications/:applId/decision", (req, res) => {
     res.sendStatus(200)
     rescoreUser(user_id, applId, type)
 })
-
 router.get('/applications/:global_id/history', (req, res) => {
     const { global_id } = req.params
 
@@ -107,7 +105,13 @@ router.get('/clients/:inn', (req, res) => {
     const bki     = bki_db.prepare('SELECT * FROM bki WHERE inn = ?').get(inn);
     const fns     = fns_db.prepare('SELECT * FROM fns WHERE inn = ?').get(inn);
     const internal_registry = db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(inn);
-    const risk_score_history = db.prepare(`SELECT * FROM scoring_results where inn = ?`).get(inn)
-    res.send(JSON.stringify(user_info, bki, fns, internal_registry, risk_score_history))
+    const risk_score_history = db.prepare(`
+        SELECT scoring_results.*
+        FROM scoring_results
+        JOIN applications ON applications.global_id = scoring_results.application_id
+        WHERE applications.inn = ?
+        ORDER BY scoring_results.created_at DESC
+    `).all(inn)
+    res.json({ user_info, bki, fns, internal_registry, risk_score_history })
 })
 export default router
