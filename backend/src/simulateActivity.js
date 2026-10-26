@@ -25,12 +25,12 @@ async function apiCall(endpoint, options = {}) {
 }
 
 export async function simulateActivity() {
-    console.log('\n🎭 === НАЧАЛО СИМУЛЯЦИИ АКТИВНОСТИ ===\n');
+    console.log('\n === НАЧАЛО СИМУЛЯЦИИ АКТИВНОСТИ ===\n');
 
     // ============================================
     // 1. ПУБЛИЧНЫЕ ЭНДПОИНТЫ
     // ============================================
-    console.log('📋 [Публичные эндпоинты]');
+    console.log('[Публичные эндпоинты]');
     await apiCall('/health');
     const products = await apiCall('/products');
     const loanIds = products.data?.map(p => p.id || p.loan_id) || [1, 2, 3];
@@ -40,7 +40,7 @@ export async function simulateActivity() {
     // ============================================
     // 2. РЕГИСТРАЦИЯ ПОЛЬЗОВАТЕЛЕЛЕЙ
     // ============================================
-    console.log('\n👤 [Регистрация пользователей]');
+    console.log('\n [Регистрация пользователей]');
     
     const clients = [
         { username: 'client', password: '12345678', email: 'ivanov@test.local', inn: '7700000001', companyName: 'ИП Иванов И.И.' },
@@ -63,7 +63,7 @@ export async function simulateActivity() {
     // ============================================
     // 3. ЛОГИН
     // ============================================
-    console.log('\n🔐 [Авторизация]');
+    console.log('\n [Авторизация]');
     
     const tokens = {};
     for (const client of clients) {
@@ -86,7 +86,7 @@ export async function simulateActivity() {
     // ============================================
     // 4. ДЕЙСТВИЯ КЛИЕНТОВ (Dashboard, заявки)
     // ============================================
-    console.log('\n💼 [Действия клиентов]');
+    console.log('\n [Действия клиентов]');
 
     for (let i = 0; i < clients.length; i++) {
         const client = clients[i];
@@ -94,7 +94,7 @@ export async function simulateActivity() {
         const authHeaders = { 'Authorization': token, 'Content-Type': 'application/json' };
         const localId = i + 1;
 
-        console.log(`\n  👨 Клиент: ${client.username}`);
+        console.log(`\n   Клиент: ${client.username}`);
 
         // Dashboard
         await apiCall('/client/dashboard', { headers: authHeaders });
@@ -130,10 +130,10 @@ export async function simulateActivity() {
     // ============================================
     // 5. ДЕЙСТВИЯ СОТРУДНИКА БАНКА
     // ============================================
-    console.log('\n🏦 [Действия сотрудника банка]');
+    console.log('\n [Действия сотрудника банка]');
     
     if (!employeeToken) {
-        console.log('  ⚠️  Сотрудник не авторизован, пропускаем банковские операции');
+        console.log('    Сотрудник не авторизован, пропускаем банковские операции');
     } else {
         const empHeaders = { 'Authorization': employeeToken, 'Content-Type': 'application/json' };
 
@@ -146,7 +146,7 @@ export async function simulateActivity() {
 
         for (let i = 0; i < appIds.length; i++) {
             const applId = appIds[i];
-            console.log(`\n  📄 Заявка #${applId}`);
+            console.log(`\n   Заявка #${applId}`);
 
             // Детали заявки
             const appDetails = await apiCall(`/bank/applications/${applId}`, { headers: empHeaders });
@@ -212,7 +212,7 @@ export async function simulateActivity() {
     // ============================================
     // 6. КЛИЕНТЫ УТОЧНЯЮТ ДАННЫЕ (clarify)
     // ============================================
-    console.log('\n📝 [Уточнение данных клиентами]');
+    console.log('\n [Уточнение данных клиентами]');
 
     // Только клиент с local_id = 2 (у которого запросили документы)
     const clarifyToken = tokens[clients[1]?.username];
@@ -254,7 +254,7 @@ export async function simulateActivity() {
     // ============================================
     // 7. ПОВТОРНАЯ ПРОВЕРКА КЛИЕНТАМИ
     // ============================================
-    console.log('\n🔄 [Повторная проверка статусов]');
+    console.log('\n [Повторная проверка статусов]');
 
     for (const client of clients) {
         const token = tokens[client.username];
@@ -268,5 +268,5 @@ export async function simulateActivity() {
     // Финальный health-check
     await apiCall('/health');
 
-    console.log('\n🎉 === СИМУЛЯЦИЯ ЗАВЕРШЕНА ===\n');
+    console.log('\n === СИМУЛЯЦИЯ ЗАВЕРШЕНА ===\n');
 }
