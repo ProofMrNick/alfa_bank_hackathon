@@ -9,21 +9,21 @@ const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 const STATUS_MAP = {
   DRAFT:        { label: "Черновик",            cls: "badge-gray" },
-  CREATED:      { label: "Создана",             cls: "badge-gray" },
-  SUBMITTED:    { label: "Отправлена",          cls: "badge-pending" },
+  CREATE:      { label: "Создана",             cls: "badge-gray" },
+  SUBMIT:    { label: "Отправлена",          cls: "badge-pending" },
   ENRICHMENT:   { label: "Проверяем данные",    cls: "badge-pending" },
   SCORING:      { label: "Оцениваем заявку",    cls: "badge-pending" },
   PENDING:      { label: "В рассмотрении",      cls: "badge-pending" },
   UNDER_REVIEW: { label: "В рассмотрении",      cls: "badge-pending" },
-  CLARIFIED:    { label: "Данные обновлены",    cls: "badge-pending" },
+  CLARIFY:    { label: "Данные обновлены",    cls: "badge-pending" },
   NEED_INFO:    { label: "Нужны данные",        cls: "badge-pending" },
   REQUEST_INFO: { label: "Нужны данные",        cls: "badge-pending" },
   COUNTEROFFER: { label: "Контр-оффер",         cls: "badge-counter" },
-  APPROVED:     { label: "Одобрено",            cls: "badge-success" },
-  DECLINED:     { label: "Отказано",            cls: "badge-error" },
-  REJECTED:     { label: "Отказано",            cls: "badge-error" },
-  COMPLETED:    { label: "Завершена",           cls: "badge-success" },
-  CANCELLED:    { label: "Отменена",            cls: "badge-gray" },
+  APPROVE:     { label: "Одобрено",            cls: "badge-success" },
+  DECLINE:     { label: "Отказано",            cls: "badge-error" },
+  REJECT:     { label: "Отказано",            cls: "badge-error" },
+  COMPLETE:    { label: "Завершена",           cls: "badge-success" },
+  CANCEL:    { label: "Отменена",            cls: "badge-gray" },
 }
 
 function formatMoney(value) {
@@ -134,12 +134,14 @@ function BankDashboard() {
   function handleLogout() {
     localStorage.removeItem("token")
     localStorage.removeItem("role")
-    localStorage.removeItem("user")
+    localStorage.removeItem("userName")
     navigate("/login")
   }
 
-  // replace "username" with name???
-  const userName = localStorage.getItem("username") || "сотрудник"
+  const fullName = localStorage.getItem("userName") || "сотрудник"
+  const parts = fullName.split(" ")
+  const firstName = parts.length >= 2 ? parts[1] : fullName
+
 
   return (
     <div className="bank-page">
@@ -148,7 +150,6 @@ function BankDashboard() {
       </button>
 
       <div className="bank-body">
-        {/* левая панель - как на всех страницах */}
         <aside className="bank-sidebar">
           <div className="bank-logo">
             <img src="../../public/assets/alfa-logo-full.svg" className="login-logo" alt="logo" />
@@ -164,8 +165,8 @@ function BankDashboard() {
 
         <main className="bank-main">
           <header className="bank-header">
-            <h1 className="bank-hello">Добрый день, {userName}</h1>
-            <p className="bank-role">Сотрудник банка</p>
+            <h1 className="bank-hello">Добрый день, {firstName}</h1>
+            <p className="bank-role">{fullName} (сотрудник банка)</p>
           </header>
 
           <section className="bank-block">

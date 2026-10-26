@@ -8,21 +8,37 @@ const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 const STATUS_MAP = {
   DRAFT:        { label: "Черновик",              cls: "badge-gray" },
-  CREATED:      { label: "Создана",               cls: "badge-pending" },
-  SUBMITTED:    { label: "Отправлена",            cls: "badge-pending" },
+  CREATE:      { label: "Создана",               cls: "badge-pending" },
+  SUBMIT:    { label: "Отправлена",            cls: "badge-pending" },
   ENRICHMENT:   { label: "Проверяем данные",      cls: "badge-pending" },
   SCORING:      { label: "Оцениваем заявку",      cls: "badge-pending" },
   PENDING:      { label: "На рассмотрении",       cls: "badge-pending" },
   UNDER_REVIEW: { label: "В рассмотрении",        cls: "badge-pending" },
-  CLARIFIED:    { label: "Данные обновлены",      cls: "badge-pending" },
+  CLARIFY:    { label: "Данные обновлены",      cls: "badge-pending" },
   NEED_INFO:    { label: "Нужны данные",          cls: "badge-orange" },
   REQUEST_INFO: { label: "Нужны данные",          cls: "badge-orange" },
   COUNTEROFFER: { label: "Есть предложение",      cls: "badge-purple" },
-  APPROVED:     { label: "Одобрено",              cls: "badge-green" },
-  DECLINED:     { label: "Отказано",              cls: "badge-red" },
-  REJECTED:     { label: "Отказано",              cls: "badge-red" },
-  COMPLETED:    { label: "Завершена",             cls: "badge-green" },
-  CANCELLED:    { label: "Отменена",              cls: "badge-gray" },
+  APPROVE:     { label: "Одобрено",              cls: "badge-green" },
+  DECLINE:     { label: "Отказано",              cls: "badge-red" },
+  REJECT:     { label: "Отказано",              cls: "badge-red" },
+  COMPLETE:    { label: "Завершена",             cls: "badge-green" },
+  CANCEL:    { label: "Отменена",              cls: "badge-gray" },
+}
+
+// just in case backend sends data in past tense
+const STATUS_ALIASES = {
+  CREATED:   "CREATE",
+  SUBMITTED: "SUBMIT",
+  CLARIFIED: "CLARIFY",
+  APPROVED:  "APPROVE",
+  DECLINED:  "DECLINE",
+  REJECTED:  "REJECT",
+  COMPLETED: "COMPLETE",
+  CANCELLED: "CANCEL",
+}
+
+function canonicalStatus(status) {
+  return STATUS_ALIASES[status] || status
 }
 
 
@@ -35,40 +51,40 @@ const FEED_TYPE_MAP = {
 }
 
 const FEED_STATUS_TITLE = {
-  CREATED: "Заявка создана",
-  SUBMITTED: "Заявка отправлена",
-  PENDING: "Заявка на стадии рассмотрения",
+  CREATE:       "Заявка создана",
+  SUBMIT:       "Заявка отправлена",
+  PENDING:      "Заявка на стадии рассмотрения",
   UNDER_REVIEW: "Заявка на стадии рассмотрения",
-  ENRICHMENT: "Проверяем данные",
-  SCORING: "Оцениваем заявку",
-  NEED_INFO: "Нужны дополнительные данные",
+  ENRICHMENT:   "Проверяем данные",
+  SCORING:      "Оцениваем заявку",
+  NEED_INFO:    "Нужны дополнительные данные",
   REQUEST_INFO: "Нужны дополнительные данные",
-  CLARIFIED: "Данные обновлены",
+  CLARIFY:      "Данные обновлены",
   COUNTEROFFER: "Банк предложил другие условия",
-  APPROVED: "Кредит одобрен",
-  DECLINED: "Отказ в предоставлении кредита",
-  REJECTED: "Отказ в предоставлении кредита",
-  COMPLETED: "Кредит оформлен",
-  CANCELLED: "Заявка отменена",
+  APPROVE:      "Кредит одобрен",
+  DECLINE:      "Отказ в предоставлении кредита",
+  REJECT:       "Отказ в предоставлении кредита",
+  COMPLETE:     "Кредит оформлен",
+  CANCEL:       "Заявка отменена",
 }
 
 
 const FEED_STATUS_TEXT = {
-  CREATED: "Мы приняли вашу заявку и начали обработку.",
-  SUBMITTED: "Заявка отправлена в банк.",
+  CREATE: "Мы приняли вашу заявку и начали обработку.",
+  SUBMIT: "Заявка отправлена в банк.",
   PENDING: "Банк рассматривает вашу заявку. Никаких действий не требуется.",
   UNDER_REVIEW: "Банк рассматривает вашу заявку. Никаких действий не требуется.",
   ENRICHMENT: "Проверяем данные компании по внешним источникам.",
   SCORING: "Оцениваем кредитный риск по заявке.",
   NEED_INFO: "Заполните недостающие данные, чтобы продолжить рассмотрение.",
   REQUEST_INFO: "Заполните недостающие данные, чтобы продолжить рассмотрение.",
-  CLARIFIED: "Вы обновили данные, заявка снова на рассмотрении.",
+  CLARIFY: "Вы обновили данные, заявка снова на рассмотрении.",
   COUNTEROFFER: "Банк предложил скорректированные условия. Посмотрите детали в заявке.",
-  APPROVED: "Банк готов предложить финансирование. Посмотрите условия в заявке.",
-  DECLINED: "К сожалению, банк не смог одобрить финансирование.",
-  REJECTED: "К сожалению, банк не смог одобрить финансирование.",
-  COMPLETED: "Предложение принято, кредит оформлен (выдача смоделирована).",
-  CANCELLED: "Вы отклонили предложение банка.",
+  APPROVE: "Банк готов предложить финансирование. Посмотрите условия в заявке.",
+  DECLINE: "К сожалению, банк не смог одобрить финансирование.",
+  REJECT: "К сожалению, банк не смог одобрить финансирование.",
+  COMPLETE: "Предложение принято, кредит оформлен (выдача смоделирована).",
+  CANCEL: "Вы отклонили предложение банка.",
 }
 
 function formatMoney(value) {
@@ -98,7 +114,7 @@ function normalizeCompanyFromInfo(info) {
 }
 
 
-// ---------- продукт из recommendations -> поля для OfferCard ----------
+// ---------- продукт из products -> поля для OfferCard ----------
 // режим 1 (сейчас): каталог id/name/interest_rate/duration/max_amount, itemId нет
 // режим 2 (потом):  остатки сессий itemId/preliminaryLimit/preliminaryRate/termMonths
 function normalizeOffer(raw) {
@@ -124,16 +140,15 @@ function normalizeOffer(raw) {
 function normalizeApplication(raw, productMap) {
   const map = productMap || {}
   return {
-    id: raw.local_id ?? raw.id ?? null,            // <- для перехода на /applications/:id
-    globalId: raw.global_id ?? null,               // <- для резолва ленты
+    id: raw.local_id ?? raw.id ?? null,
+    globalId: raw.global_id ?? null,
     number: raw.local_id ?? raw.number ?? null,
     status: raw.status ?? "",
     amount: raw.loan_sum ?? raw.amount ?? null,
     termMonths: raw.loan_duration ?? raw.termMonths ?? null,
     rate: raw.loan_interest ?? raw.rate ?? null,
-    // название продукта: сначала то, что дал бэк, потом карта из /products
     productName: raw.loan_name ?? raw.product_name ?? raw.productName ?? map[raw.loan_id] ?? "",
-    purpose: raw.purpose ?? "",                    // на будущее: если бэк добавит цель
+    purpose: raw.purpose ?? "",
     createdAt: raw.time_of_application ?? raw.created_at ?? null,
   }
 }
@@ -154,7 +169,7 @@ function normalizeFeedItem(raw, appsList, index) {
     subtitle = "Заявка (id " + raw.application_global_id + ")"
   }
 
-  const status = raw.new_status ?? raw.status ?? ""
+  const status = canonicalStatus(raw.new_status ?? raw.status ?? "")
   const title = FEED_STATUS_TITLE[status] ?? status
   // comment бэкенда приоритетнее дефолта; null ?? text -> text
   const text = raw.comment ?? FEED_STATUS_TEXT[status] ?? ""
@@ -279,9 +294,6 @@ function ClientDashboard() {
     }
 
     try {
-      // ПРАВКА: дашборд и справочник продуктов грузим параллельно (Promise.all),
-      // чтобы карта loan_id -> name была готова ДО нормализации заявок
-      // (иначе была бы гонка и productName снова пустой).
       const [dashRes, prodRes] = await Promise.all([
         fetch(API_URL + "/api/client/dashboard", { headers }),
         fetch(API_URL + "/api/products", { headers }).catch(function (e) {
@@ -314,11 +326,13 @@ function ClientDashboard() {
 
       // строим карту id продукта -> name из /api/products
       let productMap = {}
+      let productsList = []
       if (prodRes && prodRes.ok) {
         try {
           const prodText = await prodRes.text()
           const prodData = JSON.parse(prodText)
           const list = Array.isArray(prodData) ? prodData : (prodData.products || prodData.loans || [])
+          productsList = list
           for (let i = 0; i < list.length; i++) {
             const p = list[i]
             const pid = p.id ?? p.product_id ?? p.loan_id
@@ -345,7 +359,18 @@ function ClientDashboard() {
       })
       setFeed(feedNorm)
 
-      setOffers((data.recommendations || []).map(normalizeOffer))
+      
+      console.log("data.recommendations:", data.recommendations)
+      console.log("data.products:", data.products)
+      console.log("productsList:", productsList)
+
+      let recsRaw = productsList
+      if (Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+        recsRaw = data.recommendations
+      } else if (Array.isArray(data.products) && data.products.length > 0) {
+        recsRaw = data.products
+      }
+      setOffers(recsRaw.map(normalizeOffer))
     } catch (e) {
       console.error("fetch упал:", e)
       setError("Сервер недоступен. Попробуйте обновить страницу")
@@ -411,6 +436,7 @@ function ClientDashboard() {
   function handleLogout() {
     localStorage.removeItem("token")
     localStorage.removeItem("user")
+    localStorage.removeItem("userName")
     navigate("/login")
   }
 

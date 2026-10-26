@@ -77,6 +77,8 @@
 .app-main { flex: 1; min-width: 0; }
 
 .app-back-pill {
+  display: flex;
+  align-items: center;
   border: none;
   border-radius: 12px;
   background-color: #ffffff;
@@ -88,6 +90,7 @@
   color: var(--color-text);
   margin-bottom: 18px;
 }
+
 .app-back-pill:hover { background-color: var(--color-light-grey); }
 
 .app-note { color: var(--color-dark-grey); font-size: 14px; }
