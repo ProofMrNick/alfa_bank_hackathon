@@ -12,17 +12,51 @@ router.get('/', (req, res) => {
     res.json(applications)
 })
 
-/// Create a new application v 1.0
-/*router.post('/', (req, res) => {
-    
-    const { loan_id } = req.body
-    const application_id = db.prepare('SELECT MAX(application_id) as max_id FROM applications WHERE user_id = ?').get(req.userId).max_id || 0 // get the max application_id for this user, or 0 if none exist
-    const insertApplication = db.prepare(`INSERT INTO applications (user_id, loan_id, application_id) VALUES (?, ?, ?)`)
-    insertApplication.run(req.userId, loan_id, application_id + 1)
-    res.status(201).send({ message: "Application created" })
+router.post('/', (req, res) => {
+    const userId = req.userId
+    const inn = req.inn
+    const loanId = Number(req.body.loan_id ?? req.body.product_id)
+    const loanSum = Number(req.body.loan_sum)
+    const loanDuration = Number(req.body.loan_duration)
 
+    const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId)
+    if (!loan) {
+        return res.status(404).json({ message: 'Кредитный продукт не найден' })
+    }
+    if (!Number.isFinite(loanSum) || loanSum < loan.min_amount || loanSum > loan.max_amount) {
+        return res.status(400).json({ message: 'Сумма не входит в диапазон выбранного продукта' })
+    }
+    if (!Number.isInteger(loanDuration) || loanDuration <= 0 || loanDuration > loan.duration) {
+        return res.status(400).json({ message: 'Срок не входит в диапазон выбранного продукта' })
+    }
+
+    const duplicate = db.prepare(`
+        SELECT global_id FROM applications
+        WHERE user_id = ? AND loan_id = ? AND status NOT IN ('APPROVE', 'DECLINE')
+    `).get(userId, loanId)
+    if (duplicate) {
+        return res.status(409).json({ message: 'По этому продукту уже есть активная заявка' })
+    }
+
+    const nextLocalId = db.prepare(`
+        SELECT COALESCE(MAX(local_id), 0) + 1 AS id
+        FROM applications WHERE user_id = ?
+    `).get(userId).id
+    const result = db.prepare(`
+        INSERT INTO applications (
+            user_id, inn, local_id, loan_id, loan_sum,
+            loan_interest, loan_duration, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING')
+    `).run(userId, inn, nextLocalId, loanId, loanSum, loan.interest_rate, loanDuration)
+
+    res.status(201).json({
+        message: 'Application created',
+        application_id: nextLocalId,
+        local_id: nextLocalId,
+        global_id: Number(result.lastInsertRowid),
+        status: 'PENDING',
     })
-*/
+})
 
 // View an application
 router.get('/:local_id', (req, res) => {

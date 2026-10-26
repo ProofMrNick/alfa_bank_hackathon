@@ -22,6 +22,14 @@ export default function fill_db() {
         ('Автокредит', 10.5, 84, 300000, 7000000),
         ('Кредит для бизнеса', 14.0, 36, 500000, 10000000)
     `)
+
+    db.prepare(`
+        INSERT INTO registry_internal (
+            inn, has_account, account_opened_date, avg_monthly_inflow,
+            avg_monthly_outflow, acquiring_monthly_volume, blocked_115fz,
+            previous_products_closed_well, snapshot_date
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run('7700000099', 1, '2020-01-10', 5000000, 3800000, 1000000, 0, 1, '2026-10-20')
     
 }
 

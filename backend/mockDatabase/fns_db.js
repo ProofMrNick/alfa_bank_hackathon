@@ -23,4 +23,27 @@ db.exec(`
     )
 `)
 
+db.prepare(`
+    INSERT INTO fns (
+        inn, ogrn, name, legal_form, registration_date, status,
+        okved_main, okved_additional, tax_regime, msp_category,
+        msp_registry_date, edo_participant, head_name, head_position
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`).run(
+    '7700000099',
+    '1027700000000',
+    'ООО Надёжный бизнес',
+    'OOO',
+    '2018-05-10',
+    'ACTIVE',
+    '62.01',
+    JSON.stringify(['62.02', '63.11']),
+    'USN',
+    'SMALL',
+    '2018-08-01',
+    1,
+    'Иванов Иван Иванович',
+    'Генеральный директор',
+)
+
 export default db
