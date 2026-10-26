@@ -47,7 +47,6 @@ function Login() {
         // saving user token
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", JSON.stringify(data.role));
-        localStorage.setItem("userName", data.user_info?.name || data.username || "");
 
         // if a bank employee tries to open "/" -> redirecting them to "/bank"
         // if a user tries to open "/bank"      -> redirecting them to "/"
