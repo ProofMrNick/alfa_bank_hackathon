@@ -2,7 +2,7 @@ import express from "express";
 import db from '../db.js'
 import bki_db from '../../mockDatabase/bki_db.js'
 import fns_db from '../../mockDatabase/fns_db.js'
-
+import { rescoreUser } from "../scoringServices.js";
 const router = express.Router()
 
 router.get("/applications", (req, res) => {
@@ -32,6 +32,7 @@ router.post("/applications/:applId/decision", (req, res) => {
 
     const getApplication = db.prepare("SELECT * FROM applications WHERE global_id = ?")
     const application = getApplication.get(applId)
+    const user_id = application.user_id
     if(!application) { return res.status(404).send({ message: "Application not found" }) }
 
     if (type == "APPROVE" || type == "COUNTEROFFER"){

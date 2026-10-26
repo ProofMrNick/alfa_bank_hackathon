@@ -1,10 +1,9 @@
-import db from '../db.js'
-import bki_db from '../../mockDatabase/bki_db.js'
-import fns_db from '../../mockDatabase/fns_db.js'
+import db from './db.js'
+import bki_db from '../mockDatabase/bki_db.js'
+import fns_db from '../mockDatabase/fns_db.js'
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000'
 
-<<<<<<< HEAD
 // Rule-based fallback (если ML недоступен)
 function computeRiskScore(fns, bki, internal) {
     let score = 0
@@ -16,32 +15,6 @@ function computeRiskScore(fns, bki, internal) {
     if (fns?.status !== 'ACTIVE') { score += 30; reasons.push('inactive_company') }
     if (internal?.blocked_115fz) { score += 50; reasons.push('blocked_115fz') }
     if (!internal?.has_account) { score += 20; reasons.push('no_bank_history') }
-=======
-export function rescoreApplication(applicationGlobalId, trigger) {
-  const app     = db.prepare('SELECT * FROM applications WHERE global_id = ?').get(applicationGlobalId);
-  const inn     = app.inn
-
-  const bki     = bki_db.prepare('SELECT * FROM registry_bki WHERE inn = ?').get(inn);
-  const fns     = fns_db.prepare('SELECT * FROM registry_bki WHERE inn = ?').get(inn);
-  const internal = db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(inn);
-
-  const risk = computeRiskScore(fns, bki, internal);
-
-  const nextVersion = db.prepare(
-    'SELECT COALESCE(MAX(version), 0) + 1 AS v FROM scoring_results WHERE application_id = ?'
-    ).get(applicationGlobalId).v;
-
-  db.prepare(`
-    INSERT INTO scoring_results
-      (application_id, score, risk_level, model_version, factors, reason_codes, trigger, version)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    UPDATE user_id SET risk_score = ? WHERE inn = ?
-  `).run(
-    applicationGlobalId, risk.score, risk.riskLevel, 'scoring_v1',
-    JSON.stringify(risk.reasons), JSON.stringify(risk.reasonCodes || []),
-    trigger, nextVersion, score, inn
-  );
->>>>>>> ea4400473953e81f9a9d63a8d3a5afe00a5ae2d2
 
     const riskScore = Math.min(100, Math.max(0, score))
     const riskLevel = riskScore < 30 ? 'LOW' : riskScore < 60 ? 'MEDIUM' : 'HIGH'
