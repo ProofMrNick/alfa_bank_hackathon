@@ -9,6 +9,7 @@
   position: relative;
 }
 
+/* кнопка выхода в правом верхнем углу */
 .dash-logout {
   position: absolute;
   top: 24px;
@@ -23,61 +24,155 @@
   font-size: 16px;
   color: #1f1f1f;
 }
-.dash-logout:hover { background-color: #f0f0f0; }
 
-.dash-body { display: flex; gap: 28px; align-items: flex-start; }
+.dash-logout:hover {
+  background-color: #f0f0f0;
+}
+
+.dash-body {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+}
 
 /* ---------- левая панель ---------- */
-.dash-sidebar { width: 220px; flex-shrink: 0; }
-.dash-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
-.login-logo { width: fit-content; padding-bottom: 4px; margin-bottom: 60px; }
-.dash-nav { display: flex; flex-direction: column; gap: 6px; }
-.dash-nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 14px; border-radius: 12px; text-decoration: none;
-  color: #1f1f1f; font-size: 14px;
+.dash-sidebar {
+  width: 220px;
+  flex-shrink: 0;
 }
-.dash-nav-item:hover { background-color: #ffffff; }
+
+.dash-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.login-logo {
+  width: fit-content;
+  padding-bottom: 4px;
+  margin-bottom: 60px;
+}
+
+.dash-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dash-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  color: #1f1f1f;
+  font-size: 14px;
+}
+
+.dash-nav-item:hover {
+  background-color: #ffffff;
+}
+
 .dash-nav-active {
   background-color: #ffffff;
   /*box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);*/
   font-weight: 600;
 }
-.dash-nav-icon { width: 18px; text-align: center; color: #8a8a8a; }
+
+.dash-nav-icon {
+  width: 18px;
+  text-align: center;
+  color: #8a8a8a;
+}
 
 /* ---------- основная область ---------- */
-.dash-main { flex: 1; min-width: 0; }
-.dash-header { margin-bottom: 24px; }
-.dash-hello { font-family: var(--font-title); font-size: 34px; font-weight: 800; margin: 0 0 4px 0; }
-.dash-company { font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6b6b; margin: 0; }
-.dash-note { color: #6b6b6b; font-size: 14px; }
-.dash-note-error { color: #ef3124; }
+.dash-main {
+  flex: 1;
+  min-width: 0;
+}
 
+<<<<<<< HEAD
 .dash-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
 .dash-col-left { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 
 .dash-block {
   background-color: #ffffff; border-radius: 16px; padding: 24px;
   /*box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);*/
+=======
+.dash-header {
+  margin-bottom: 24px;
 }
-.dash-block-title { font-size: 20px; font-weight: 700; margin: 0 0 18px 0; }
-.dash-empty { color: #8a8a8a; font-size: 14px; margin: 0; }
 
-/* ---------- заявки: ГОРИЗОНТАЛЬНАЯ ПРОКРУТКА, ровно 2 видно ---------- */
-/* было: flex-wrap:wrap + карточка flex:1 (растягивалась). Стало: nowrap + overflow. */
+.dash-hello {
+  font-family: var(--font-title);
+  font-size: 34px;
+  font-weight: 800;
+  margin: 0 0 4px 0;
+}
+
+.dash-company {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b6b6b;
+  margin: 0;
+}
+
+.dash-note {
+  color: #6b6b6b;
+  font-size: 14px;
+}
+
+.dash-note-error {
+  color: #ef3124;
+}
+
+/* сетка: слева широкий столбец, справа узкий */
+.dash-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 24px;
+  align-items: start;
+}
+
+.dash-col-left {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dash-block {
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+>>>>>>> af557a0a94b52ccee2e46e62551c295be6913ca1
+}
+
+.dash-block-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 18px 0;
+}
+
+.dash-empty {
+  color: #8a8a8a;
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ---------- карточки заявок ---------- */
 .dash-apps-row {
   display: flex;
   gap: 16px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 6px;          /* место под скроллбар, чтобы не резал контент */
-  scrollbar-width: thin;        /* тонкий скроллбар в Firefox */
+  flex-wrap: wrap;
 }
-/* border-box ОБЯЗАТЕЛЕН: без него padding+border прибавляются к 50% и влезает <2 */
+
 .dash-app-card {
-  flex: 0 0 calc(50% - 8px);    /* 2 карточки + 1 gap(16px) = ровно 100% ширины */
-  box-sizing: border-box;
-  min-width: 0;
+  flex: 1;
+  min-width: 220px;
   border: 1px solid #ececec;
   border-radius: 14px;
   padding: 18px;
@@ -86,42 +181,75 @@
   gap: 8px;
 }
 
-.dash-app-top { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #6b6b6b; flex-wrap: wrap; }
-.dash-app-num { font-weight: 700; color: #1f1f1f; }
-.dash-app-amount { font-size: 24px; font-weight: 800; }
-.dash-app-product { font-size: 13px; color: #6b6b6b; margin-bottom: 6px; }
+.dash-app-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #6b6b6b;
+  flex-wrap: wrap;
+}
+
+.dash-app-num {
+  font-weight: 700;
+  color: #1f1f1f;
+}
+
+.dash-app-amount {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.dash-app-product {
+  font-size: 13px;
+  color: #6b6b6b;
+  margin-bottom: 6px;
+}
 
 /* ---------- бейджи статусов ---------- */
-.dash-badge { margin-left: auto; font-size: 12px; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
-.badge-gray    { background-color: #ededed; color: #555; }
-.badge-blue    { background-color: #e6eefb; color: #2b59c3; }
-.badge-green   { background-color: #e3f6e8; color: #1f8a44; }
-.badge-red     { background-color: #fde3e1; color: #d23b2e; }
-.badge-orange  { background-color: #fdefdf; color: #c47a16; }
-.badge-purple  { background-color: #ece6f9; color: #6b46c1; }
-.badge-pending { background-color: #fdefdf; color: #c47a16; }   /* PENDING/в работе */
+.dash-badge {
+  margin-left: auto;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.badge-gray { background-color: #ededed; color: #555; }
+.badge-blue { background-color: #e6eefb; color: #2b59c3; }
+.badge-green { background-color: #e3f6e8; color: #1f8a44; }
+.badge-red { background-color: #fde3e1; color: #d23b2e; }
+.badge-orange { background-color: #fdefdf; color: #c47a16; }
+.badge-purple { background-color: #ece6f9; color: #6b46c1; }
 
 /* ---------- красная кнопка ---------- */
 .dash-btn-red {
-  border: none; border-radius: 10px; background-color: #ef3124;
-  color: #ffffff; font-size: 14px; font-weight: 600; padding: 12px;
-  cursor: pointer; width: 100%; font-family: inherit;
+  border: none;
+  border-radius: 10px;
+  background-color: #ef3124;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px;
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
 }
-.dash-btn-red:hover { background-color: #d8291d; }
 
-/* ---------- лента: та же прокрутка, ровно 2 видно ---------- */
+.dash-btn-red:hover {
+  background-color: #d8291d;
+}
+
+/* ---------- лента ---------- */
 .dash-feed-row {
   display: flex;
   gap: 16px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  scrollbar-width: thin;
+  flex-wrap: wrap;
 }
+
 .dash-feed-card {
-  flex: 0 0 calc(50% - 8px);
-  box-sizing: border-box;
-  min-width: 0;
+  flex: 1;
+  min-width: 200px;
   background-color: #f4f5f7;
   border-radius: 14px;
   padding: 18px;
@@ -129,6 +257,7 @@
   flex-direction: column;
   gap: 6px;
 }
+<<<<<<< HEAD
 .dash-feed-type { font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: #8a8a8a; }
 .dash-feed-sub  { font-size: 12px; color: #6b6b6b; }
 .dash-feed-title{ font-size: 23px; font-weight: 700; margin: 20px 0 0 0; }
@@ -153,4 +282,80 @@
 .dash-app-product {
   overflow-wrap: break-word;
   word-break: break-word;
+=======
+
+.dash-feed-type {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #8a8a8a;
+}
+
+.dash-feed-sub {
+  font-size: 12px;
+  color: #6b6b6b;
+}
+
+.dash-feed-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dash-feed-text {
+  font-size: 13px;
+  color: #6b6b6b;
+  line-height: 1.4;
+}
+
+/* ---------- правая колонка: предложения ---------- */
+.dash-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dash-offer-card {
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.offer-blue { background-color: #e8f1fb; }
+.offer-peach { background-color: #fdeae1; }
+
+.dash-offer-name {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.dash-offer-desc {
+  font-size: 12px;
+  color: #555;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.dash-offer-params {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.dash-offer-param {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dash-offer-label {
+  font-size: 11px;
+  color: #6b6b6b;
+}
+
+.dash-offer-value {
+  font-size: 14px;
+  font-weight: 700;
+>>>>>>> af557a0a94b52ccee2e46e62551c295be6913ca1
 }

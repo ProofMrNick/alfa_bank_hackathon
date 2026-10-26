@@ -34,4 +34,12 @@ db.exec(`
     ('7700000004', 'NO_DATA', NULL,      NULL,      NULL, NULL, NULL, 0, NULL);
 `)
 
+db.prepare(`
+    INSERT INTO bki (
+        inn, report_status, active_loans_count, total_debt,
+        monthly_payment, delinquencies_12m_count,
+        max_delinquency_days, has_default, report_date
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+`).run('7700000099', 'FOUND', 1, 1000000, 80000, 0, 0, 0, '2026-10-20')
+
 export default db

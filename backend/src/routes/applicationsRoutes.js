@@ -2,7 +2,7 @@ import express, { application } from 'express'
 import db from '../db.js'
 import bki_db from '../../mockDatabase/bki_db.js'
 import fns_db from '../../mockDatabase/fns_db.js'
-
+import { runInitialMLAssertion } from '../mlAssertion.js'
 const router = express.Router()
 
 // Get all applications for the authenticated user
@@ -12,6 +12,51 @@ router.get('/', (req, res) => {
     res.json(applications)
 })
 
+router.post('/', (req, res) => {
+    const userId = req.userId
+    const inn = req.inn
+    const loanId = Number(req.body.loan_id ?? req.body.product_id)
+    const loanSum = Number(req.body.loan_sum)
+    const loanDuration = Number(req.body.loan_duration)
+
+    const loan = db.prepare('SELECT * FROM loans WHERE id = ?').get(loanId)
+    if (!loan) {
+        return res.status(404).json({ message: 'Кредитный продукт не найден' })
+    }
+    if (!Number.isFinite(loanSum) || loanSum < loan.min_amount || loanSum > loan.max_amount) {
+        return res.status(400).json({ message: 'Сумма не входит в диапазон выбранного продукта' })
+    }
+    if (!Number.isInteger(loanDuration) || loanDuration <= 0 || loanDuration > loan.duration) {
+        return res.status(400).json({ message: 'Срок не входит в диапазон выбранного продукта' })
+    }
+
+    const duplicate = db.prepare(`
+        SELECT global_id FROM applications
+        WHERE user_id = ? AND loan_id = ? AND status NOT IN ('APPROVE', 'DECLINE')
+    `).get(userId, loanId)
+    if (duplicate) {
+        return res.status(409).json({ message: 'По этому продукту уже есть активная заявка' })
+    }
+
+    const nextLocalId = db.prepare(`
+        SELECT COALESCE(MAX(local_id), 0) + 1 AS id
+        FROM applications WHERE user_id = ?
+    `).get(userId).id
+    const result = db.prepare(`
+        INSERT INTO applications (
+            user_id, inn, local_id, loan_id, loan_sum,
+            loan_interest, loan_duration, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING')
+    `).run(userId, inn, nextLocalId, loanId, loanSum, loan.interest_rate, loanDuration)
+
+    res.status(201).json({
+        message: 'Application created',
+        application_id: nextLocalId,
+        local_id: nextLocalId,
+        global_id: Number(result.lastInsertRowid),
+        status: 'PENDING',
+    })
+})
 // View an application
 router.get('/:local_id', (req, res) => {
     const { local_id } = req.params
@@ -28,7 +73,7 @@ router.get('/:local_id/history', (req, res) => {
     const { local_id } = req.params
     const userId = req.userId
 
-    
+
     const getGlobalId = db.prepare(`SELECT global_id FROM applications WHERE local_id = ? AND user_id = ?`)
     const globalId = getGlobalId.get(local_id, userId)
     if(!globalId) { return res.status(404).send({ message: "Application not found" }) }
@@ -47,30 +92,54 @@ router.post('/:applId/submit', (req, res) => {
     const userId = req.userId
     const inn = req.inn
 
-    if (!inn) { return res.status(404).send({ message: "INN not found" }) }
+<<<<<<< HEAD
     const {loan_sum, loan_interest, loan_duration} = req.body
     console.log(`submitting application with id: ${applId} for user: ${userId}, ${loan_duration}, ${loan_interest}, ${loan_sum}`)
+=======
+    if (!inn) { return res.status(404).send({ message: "INN not found" }) }
+    const {loan_id, loan_sum, loan_interest, loan_duration} = req.body
+    console.log(`submitting application with id: ${applId} for user: ${userId}, ${loan_id}, ${loan_duration}, ${loan_interest}, ${loan_sum}`)
+>>>>>>> ea4400473953e81f9a9d63a8d3a5afe00a5ae2d2
     
-    const findApplication = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND status != ? AND status != ?`).get(userId, 'ACCEPT', 'DECLINE')
+    const findApplication = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND loan_id = ? AND status != ? AND status != ?`).get(userId, loan_id, 'ACCEPT', 'DECLINE')
     if(findApplication) {return res.status(403).send({message: "Application already submitted"})}
+    const createApplication = db.prepare(`INSERT INTO applications (user_id, inn, local_id, loan_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?, ?)`)
+    createApplication.run(userId, inn, applId, loan_id, loan_sum, loan_interest, loan_duration)
 
+<<<<<<< HEAD
     const createApplication = db.prepare(`INSERT INTO applications (user_id, inn, local_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?)`)
     createApplication.run(userId, inn, applId, loan_sum, loan_interest, loan_duration)
 
+=======
+    const fns_info = fns_db.prepare(`SELECT * FROM fns WHERE inn = ?`).get(inn)
+    const bki_info = bki_db.prepare(`SELECT * FROM bki WHERE inn = ?`).get(inn)
     res.status(201).send({message: "Application created"})
+>>>>>>> ea4400473953e81f9a9d63a8d3a5afe00a5ae2d2
 
-    const application = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND local_id = ?`).get(userId, applId)
 
+<<<<<<< HEAD
+    const userInfo = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`).get(userId)
     const bki     = bki_db.prepare('SELECT * FROM bki WHERE inn = ?').get(inn);
     const fns     = fns_db.prepare('SELECT * FROM fns WHERE inn = ?').get(inn);
     const internal_registry = db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(inn);
     const risk_score = db.prepare('SELECT * FROM user_info WHERE user_id = ?').get(userId).risk_score
     //do smting
-    //run_initial_ML_assertion(application, bki, fns, internal_registry, risk_score)
+     runInitialMLAssertion(application, bki, fns, internal_registry, userInfo.risk_score)
+        .catch(err => console.error('ML assertion failed:', err.message))
+    
     const deleteFromRecommendations = db.prepare(`DELETE FROM recommended_loans WHERE user_id = ? AND loan_sum = ? AND loan_interest = ? AND loan_duration = ?`)
-    deleteFromRecommendations.run(userId, loan_sum, loan_duration, loan_interest)
+    deleteFromRecommendations.run(userId, loan_sum, loan_interest, loan_duration)
+=======
 
+    const updateApplication = db.prepare(`UPDATE applications SET status = ? WHERE user_id = ? AND local_id = ?`)
+    updateApplication.run('PENDING', userId, applId)
+>>>>>>> ea4400473953e81f9a9d63a8d3a5afe00a5ae2d2
 
+        res.status(201).json({
+        success: true,
+        message: "Заявка подана, ML обрабатывает",
+        data: { application_id: application.global_id, local_id: applId }
+    })
 })
 
 router.post('/:applId/acceptOffer', (req, res) =>{
