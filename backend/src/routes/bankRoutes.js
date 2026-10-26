@@ -84,7 +84,7 @@ router.post("/applications/:applId/decision", (req, res) => {
         return res.status(400).send({ message: "Invalid decision type" })
     }
     res.sendStatus(200)
-    rescoreUser(user_id, applId, type)
+    //rescoreUser(user_id, applId, type)
 })
 
 router.get('/applications/:global_id/history', (req, res) => {

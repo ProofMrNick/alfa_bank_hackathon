@@ -11,7 +11,6 @@ router.post('/register', (req, res) => {
     const { username, password, inn, email, companyName } = req.body
 
     const hashedPassword = bcrypt.hashSync(password, 8)
-    console.log(hashedPassword)
 
     try {
         const insertUser = db.prepare(`INSERT INTO users (username, password) VALUES (?, ?)`)
@@ -19,19 +18,22 @@ router.post('/register', (req, res) => {
 
         const insertUserInfo = db.prepare(`INSERT INTO user_info (user_id, email, name, inn, company_name) VALUES (?, ?, ?, ?, ?)`)
         insertUserInfo.run(result.lastInsertRowid, email, username, inn, companyName)
-
+        
         // create a token, take JWT secret from .env file, and set the expiration time to 24 hours
         const token = jwt.sign({ id: result.lastInsertRowid }, process.env.JWT_SECRET, { expiresIn: '24h' })
         const getUser = db.prepare('SELECT * FROM users WHERE username = ?')
         const user = getUser.get(username)
+
+        const userId = user.id
+        const user_info = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`).get(userId)
         const role = user.role
-        res.json({ token, role})
+        res.json({ token, role, user_info})
     } catch (err) {
         console.log(err.message)
         res.sendStatus(503)
     }
 
-    console.log(db.prepare(`SELECT * FROM user_info`).all())
+    //console.log(db.prepare(`SELECT * FROM user_info`).all())
 })
 
 router.post('/login', (req, res) => {
