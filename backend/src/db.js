@@ -30,7 +30,6 @@ db.exec(`
         FOREIGN KEY(inn) REFERENCES user_info(inn), 
         FOREIGN KEY(user_id) REFERENCES users(id),
         FOREIGN KEY(loan_id) REFERENCES loans(id)
-        UNIQUE(user_id, local_id)
         ) 
 `)
 db.exec(`UPDATE sqlite_sequence SET seq = 432889 WHERE name = 'applications'`)
@@ -53,7 +52,6 @@ db.exec(`
     name TEXT NOT NULL,
     
     risk_score INTEGER,
-    risk_score_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
     inn TEXT UNIQUE NOT NULL,
     company_name TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -94,30 +92,27 @@ db.exec(`
 db.exec(`
     CREATE TABLE recommended_loans (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    
     user_id INTEGER,
-    loan_sum INTEGER,
-    loan_interest REAL,
-    loan_duration INTEGER,
-    approval_probability REAL,
-
+    loan_Id INTEGER,
+    approval_probability INTEGER,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY(loan_id) REFERENCES loans(id) ON DELETE CASCADE
     )
 `)
 
 db.exec(`
     CREATE TABLE scoring_results (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    application_id INTEGER NOT NULL, -- -1 if rescoring was run because of too old timestamp
-    inn TEXT,
+    application_id INTEGER NOT NULL,
     score INTEGER,
     risk_level TEXT,
     default_probability REAL,
     model_version TEXT,
     factors TEXT,
+    reason_codes TEXT,
     trigger TEXT,        -- SUBMIT | CLARIFY | ENRICHMENT | PRE_DECISION
     version INTEGER,     -- 1, 2, 3...
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (application_id) REFERENCES applications (global_id)
     )
 `)

@@ -1,8 +1,6 @@
 import express from "express";
 import db from '../db.js'
-import bki_db from '../../mockDatabase/bki_db.js'
-import fns_db from '../../mockDatabase/fns_db.js'
-import { rescoreUser } from "../scoringServices.js";
+
 const router = express.Router()
 
 router.get("/applications", (req, res) => {
@@ -34,7 +32,6 @@ router.post("/applications/:applId/decision", (req, res) => {
     const application = getApplication.get(applId)
     if(!application) { return res.status(404).send({ message: "Application not found" }) }
 
-    const user_id = application.user_id
     if (type == "APPROVE" || type == "COUNTEROFFER"){
         const updateStatus = db.prepare("UPDATE applications SET status = ?, loan_sum = ?, loan_interest = ?, loan_duration = ? WHERE global_id == ?")
         updateStatus.run(type, approvedAmount, approvedRate, approvedTermMonths, applId)
@@ -83,30 +80,7 @@ router.post("/applications/:applId/decision", (req, res) => {
     else{
         return res.status(400).send({ message: "Invalid decision type" })
     }
-    rescoreUser(user_id, applId, type)
+
     res.sendStatus(200)
-})
-
-router.get('/applications/:global_id/history', (req, res) => {
-    const { global_id } = req.params
-
-    
-    if(!globalId) { return res.status(404).send({ message: "Application not found" }) }
-
-    const getApplicationLogs = db.prepare(`SELECT * FROM applications_logs WHERE application_global_id = ?`)
-    const applicationLogs = getApplicationLogs.all(global_id)
-    if(!applicationLogs) { return res.status(404).send({ message: "Application history not found" }) }
-
-    res.json(applicationLogs)
-
-})
-
-router.get('/clients/:inn', () => {
-    const user_info = db.prepare(`SELECT * FROM user_info WHERE inn = ?`).get(inn)
-    const bki     = bki_db.prepare('SELECT * FROM registry_bki WHERE inn = ?').get(inn);
-    const fns     = fns_db.prepare('SELECT * FROM registry_bki WHERE inn = ?').get(inn);
-    const internal_registry = db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(inn);
-    const risk_score_history = db.prepare(`SELECT * FROM scoring_reslts where inn = ?`).get(inn)
-    res.send(JSON.stringify(user_info, bki, fns, internal_registry, risk_score_history))
 })
 export default router

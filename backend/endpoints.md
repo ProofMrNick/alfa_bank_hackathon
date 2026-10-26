@@ -39,7 +39,7 @@ get /applications/:applId 		-- Get the application with global\_id = applId
 
 post /applications/:applId/decision	-- Decide on the application with global\_id = applID, null by default **{type, approvedAmount, approvedTermMonths, approvedRate,missingFields, reason, comment} = req.body**
 
-get /:applId/history			-- Get all the logs for a given application with **global\_id = applID**
+
 
 
 
