@@ -22,6 +22,7 @@ const STATUS_MAP = {
   DECLINE:     { label: "Отказано",              cls: "badge-red" },
   REJECT:     { label: "Отказано",              cls: "badge-red" },
   COMPLETE:    { label: "Завершена",             cls: "badge-green" },
+  ACCEPT:      { label: "Завершена",             cls: "badge-green" }, 
   CANCEL:    { label: "Отменена",              cls: "badge-gray" },
 }
 
@@ -34,6 +35,7 @@ const STATUS_ALIASES = {
   DECLINED:  "DECLINE",
   REJECTED:  "REJECT",
   COMPLETED: "COMPLETE",
+  ACCEPTED:  "ACCEPT",
   CANCELLED: "CANCEL",
 }
 
@@ -65,6 +67,7 @@ const FEED_STATUS_TITLE = {
   DECLINE:      "Отказ в предоставлении кредита",
   REJECT:       "Отказ в предоставлении кредита",
   COMPLETE:     "Кредит оформлен",
+  ACCEPT:       "Кредит оформлен",
   CANCEL:       "Заявка отменена",
 }
 
@@ -84,6 +87,7 @@ const FEED_STATUS_TEXT = {
   DECLINE: "К сожалению, банк не смог одобрить финансирование.",
   REJECT: "К сожалению, банк не смог одобрить финансирование.",
   COMPLETE: "Предложение принято, кредит оформлен (выдача смоделирована).",
+  ACCEPT:   "Вы приняли предложение банка. Кредит оформлен (выдача смоделирована).",
   CANCEL: "Вы отклонили предложение банка.",
 }
 
@@ -171,8 +175,9 @@ function normalizeFeedItem(raw, appsList, index) {
 
   const status = canonicalStatus(raw.new_status ?? raw.status ?? "")
   const title = FEED_STATUS_TITLE[status] ?? status
-  // comment бэкенда приоритетнее дефолта; null ?? text -> text
-  const text = raw.comment ?? FEED_STATUS_TEXT[status] ?? ""
+  const text = isReadableComment(raw.comment)
+    ? String(raw.comment)
+    : (FEED_STATUS_TEXT[status] ?? "")
 
   return {
     id: raw.id ?? index,
@@ -182,6 +187,17 @@ function normalizeFeedItem(raw, appsList, index) {
     text: text,
     time: raw.timestamp ?? null,   // держим про запас; в карточке не показываем (по макету)
   }
+}
+
+// comment бэкенда может быть техническим JSON-дампом (лог clarify/decision
+// с перечнем rejected-полей). Такой «текст» в клиентскую ленту не пускаем.
+function isReadableComment(comment) {
+  if (comment == null) return false
+  const s = String(comment).trim()
+  if (s === "") return false
+  if (s.charAt(0) === "{" || s.charAt(0) === "[") return false  // JSON/массив
+  if (s.length > 200) return false                               // страховка от дампов без скобок
+  return true
 }
 
 

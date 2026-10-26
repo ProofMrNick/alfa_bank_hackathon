@@ -23,7 +23,25 @@ const STATUS_MAP = {
   DECLINE:     { label: "Отказано",            cls: "badge-error" },
   REJECT:     { label: "Отказано",            cls: "badge-error" },
   COMPLETE:    { label: "Завершена",           cls: "badge-success" },
+  ACCEPT:      { label: "Завершена",           cls: "badge-success" },
   CANCEL:    { label: "Отменена",            cls: "badge-gray" },
+}
+
+
+const STATUS_ALIASES = {
+  CREATED:    "CREATE",
+  SUBMITTED:  "SUBMIT",
+  CLARIFIED:  "CLARIFY",
+  APPROVED:   "APPROVE",
+  ACCEPTED:   "ACCEPT",
+  DECLINED:   "DECLINE",
+  REJECTED:   "REJECT",
+  COMPLETED:  "COMPLETE",
+  CANCELLED:  "CANCEL",
+}
+
+function canonicalStatus(status) {
+  return STATUS_ALIASES[status] || status
 }
 
 function formatMoney(value) {
@@ -58,7 +76,7 @@ function normalizeBankApplication(raw, index) {
     amount: raw.loan_sum ?? raw.amount ?? null,
     rate: raw.loan_interest ?? raw.rate ?? null,
     termMonths: raw.loan_duration ?? raw.termMonths ?? null,
-    status: raw.status ?? "",
+    status: canonicalStatus(raw.status ?? ""),
     createdAt: raw.time_of_application ?? raw.created_at ?? null,
   }
 }

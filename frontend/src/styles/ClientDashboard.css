@@ -53,8 +53,8 @@
 .dash-note { color: #6b6b6b; font-size: 14px; }
 .dash-note-error { color: #ef3124; }
 
-.dash-grid { display: grid; grid-template-columns: 1fr 300px; gap: 24px; align-items: start; }
-.dash-col-left { display: flex; flex-direction: column; gap: 24px; }
+.dash-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+.dash-col-left { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 
 .dash-block {
   background-color: #ffffff; border-radius: 16px; padding: 24px;
@@ -135,7 +135,7 @@
 .dash-feed-text { font-size: 13px; color: #6b6b6b; line-height: 1.4; }
 
 /* ---------- правая колонка: предложения ---------- */
-.dash-col-right { display: flex; flex-direction: column; gap: 16px; }
+.dash-col-right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .dash-offer-card { border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
 .offer-blue  { background-color: #e8f1fb; }
 .offer-peach { background-color: #fdeae1; }
@@ -145,3 +145,12 @@
 .dash-offer-param { display: flex; flex-direction: column; gap: 2px; }
 .dash-offer-label { font-size: 11px; color: #6b6b6b; }
 .dash-offer-value { font-size: 14px; font-weight: 700; }
+
+.dash-app-card,
+.dash-feed-card { overflow: hidden; }
+
+.dash-feed-text,
+.dash-app-product {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
