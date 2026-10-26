@@ -4,7 +4,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/BankApplicationDetails.css';
 import { STATUS_LABELS } from '../applicationContract.js';
 
-
 const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 

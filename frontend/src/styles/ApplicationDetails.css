@@ -19,7 +19,7 @@
   border: none;
   border-radius: 10px;
   background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  /*box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);*/
   cursor: pointer;
   font-size: 16px;
   color: var(--color-text);
@@ -77,10 +77,12 @@
 .app-main { flex: 1; min-width: 0; }
 
 .app-back-pill {
+  display: flex;
+  align-items: center;
   border: none;
   border-radius: 12px;
   background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  /*box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);*/
   padding: 12px 18px;
   font-size: 14px;
   cursor: pointer;
@@ -88,6 +90,7 @@
   color: var(--color-text);
   margin-bottom: 18px;
 }
+
 .app-back-pill:hover { background-color: var(--color-light-grey); }
 
 .app-note { color: var(--color-dark-grey); font-size: 14px; }
@@ -98,7 +101,7 @@
   background-color: #ffffff;
   border-radius: 24px;
   padding: 32px 36px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  /*box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);*/
   display: flex;
   gap: 40px;
   align-items: flex-start;
