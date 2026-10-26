@@ -15,9 +15,9 @@ const PURPOSE_LABELS = {
 
 const PRODUCT_PURPOSES = {
     1: ['WORKING_CAPITAL', 'CURRENT_ACTIVITY'],
-    2: ['EQUIPMENT'],
+    2: ['EQUIPMENT', 'CURRENT_ACTIVITY'],
     3: ['EQUIPMENT'],
-    4: ['WORKING_CAPITAL', 'EQUIPMENT', 'CURRENT_ACTIVITY'],
+    4: ['WORKING_CAPITAL', 'CURRENT_ACTIVITY'],
 }
 
 router.post('/products', async (req, res) => {
