@@ -94,16 +94,20 @@ db.exec(`
     CREATE TABLE recommended_loans (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,
-    loan_Id INTEGER,
+
+    loan_sum INTEGER,
+    loan_interest REAL,
+    loan_duration INTEGER,
+
     approval_probability INTEGER,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
-    FOREIGN KEY(loan_id) REFERENCES loans(id) ON DELETE CASCADE
     )
 `)
 
 db.exec(`
     CREATE TABLE scoring_results (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    inn TEXT,
     application_id INTEGER NOT NULL,
     score INTEGER,
     risk_level TEXT,
