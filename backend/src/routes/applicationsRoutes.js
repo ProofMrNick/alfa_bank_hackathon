@@ -92,48 +92,23 @@ router.post('/:applId/submit', (req, res) => {
     const userId = req.userId
     const inn = req.inn
 
-<<<<<<< HEAD
-    const {loan_sum, loan_interest, loan_duration} = req.body
-    console.log(`submitting application with id: ${applId} for user: ${userId}, ${loan_duration}, ${loan_interest}, ${loan_sum}`)
-=======
     if (!inn) { return res.status(404).send({ message: "INN not found" }) }
     const {loan_id, loan_sum, loan_interest, loan_duration} = req.body
     console.log(`submitting application with id: ${applId} for user: ${userId}, ${loan_id}, ${loan_duration}, ${loan_interest}, ${loan_sum}`)
->>>>>>> ea4400473953e81f9a9d63a8d3a5afe00a5ae2d2
     
     const findApplication = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND loan_id = ? AND status != ? AND status != ?`).get(userId, loan_id, 'ACCEPT', 'DECLINE')
     if(findApplication) {return res.status(403).send({message: "Application already submitted"})}
     const createApplication = db.prepare(`INSERT INTO applications (user_id, inn, local_id, loan_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?, ?)`)
     createApplication.run(userId, inn, applId, loan_id, loan_sum, loan_interest, loan_duration)
 
-<<<<<<< HEAD
-    const createApplication = db.prepare(`INSERT INTO applications (user_id, inn, local_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?)`)
-    createApplication.run(userId, inn, applId, loan_sum, loan_interest, loan_duration)
-
-=======
     const fns_info = fns_db.prepare(`SELECT * FROM fns WHERE inn = ?`).get(inn)
     const bki_info = bki_db.prepare(`SELECT * FROM bki WHERE inn = ?`).get(inn)
     res.status(201).send({message: "Application created"})
->>>>>>> ea4400473953e81f9a9d63a8d3a5afe00a5ae2d2
 
 
-<<<<<<< HEAD
-    const userInfo = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`).get(userId)
-    const bki     = bki_db.prepare('SELECT * FROM bki WHERE inn = ?').get(inn);
-    const fns     = fns_db.prepare('SELECT * FROM fns WHERE inn = ?').get(inn);
-    const internal_registry = db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(inn);
-    const risk_score = db.prepare('SELECT * FROM user_info WHERE user_id = ?').get(userId).risk_score
-    //do smting
-     runInitialMLAssertion(application, bki, fns, internal_registry, userInfo.risk_score)
-        .catch(err => console.error('ML assertion failed:', err.message))
-    
-    const deleteFromRecommendations = db.prepare(`DELETE FROM recommended_loans WHERE user_id = ? AND loan_sum = ? AND loan_interest = ? AND loan_duration = ?`)
-    deleteFromRecommendations.run(userId, loan_sum, loan_interest, loan_duration)
-=======
 
     const updateApplication = db.prepare(`UPDATE applications SET status = ? WHERE user_id = ? AND local_id = ?`)
     updateApplication.run('PENDING', userId, applId)
->>>>>>> ea4400473953e81f9a9d63a8d3a5afe00a5ae2d2
 
         res.status(201).json({
         success: true,

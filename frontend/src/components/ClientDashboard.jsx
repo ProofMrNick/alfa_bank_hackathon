@@ -6,7 +6,6 @@ const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 
 const STATUS_MAP = {
-<<<<<<< HEAD
   DRAFT:        { label: "Черновик",              cls: "badge-gray" },
   CREATE:      { label: "Создана",               cls: "badge-pending" },
   SUBMIT:    { label: "Отправлена",            cls: "badge-pending" },
@@ -41,18 +40,6 @@ const STATUS_ALIASES = {
 
 function canonicalStatus(status) {
   return STATUS_ALIASES[status] || status
-=======
-  DRAFT: { label: "Черновик", cls: "badge-gray" },
-  SUBMITTED: { label: "Отправлена", cls: "badge-blue" },
-  ENRICHMENT: { label: "Проверяем данные", cls: "badge-blue" },
-  SCORING: { label: "Оцениваем заявку", cls: "badge-blue" },
-  UNDER_REVIEW: { label: "В рассмотрении", cls: "badge-gray" },
-  NEED_MORE_INFO: { label: "Нужны данные", cls: "badge-orange" },
-  COUNTEROFFER: { label: "Есть предложение", cls: "badge-purple" },
-  APPROVED: { label: "Одобрено", cls: "badge-green" },
-  DECLINED: { label: "Отказано", cls: "badge-red" },
-  COMPLETED: { label: "Завершена", cls: "badge-green" },
->>>>>>> af557a0a94b52ccee2e46e62551c295be6913ca1
 }
 
 // типы сообщений в ленте
@@ -64,7 +51,6 @@ const FEED_TYPE_MAP = {
   TIP: "Подсказка",
 }
 
-<<<<<<< HEAD
 const FEED_STATUS_TITLE = {
   CREATE:       "Заявка создана",
   SUBMIT:       "Заявка отправлена",
@@ -104,8 +90,6 @@ const FEED_STATUS_TEXT = {
   CANCEL: "Вы отклонили предложение банка.",
 }
 
-=======
->>>>>>> af557a0a94b52ccee2e46e62551c295be6913ca1
 function formatMoney(value) {
   if (value === null || value === undefined) return "—"
   return Number(value).toLocaleString("ru-RU") + " ₽"
@@ -133,18 +117,10 @@ function normalizeCompanyFromInfo(info) {
   }
 }
 
-<<<<<<< HEAD
 
 // ---------- продукт из products -> поля для OfferCard ----------
 // режим 1 (сейчас): каталог id/name/interest_rate/duration/max_amount, itemId нет
 // режим 2 (потом):  остатки сессий itemId/preliminaryLimit/preliminaryRate/termMonths
-=======
-// продукт из recommendations -> поля для OfferCard.
-// Работает в двух режимах:
-//   1) каталог (current): id / name / interest_rate / duration / max_amount, itemId нет
-//   2) остатки сессий подбора (future): itemId / preliminaryLimit / preliminaryRate / termMonths
-// Через ?? берём первое непустое, поэтому одна функция годится для обоих.
->>>>>>> af557a0a94b52ccee2e46e62551c295be6913ca1
 function normalizeOffer(raw) {
   return {
     id: raw.id ?? raw.productId ?? null,
@@ -160,34 +136,23 @@ function normalizeOffer(raw) {
 }
 
 
-function normalizeApplication(raw) {
-  console.log("application raw:", raw)
+function normalizeApplication(raw, productMap) {
+  const map = productMap || {}
   return {
-<<<<<<< HEAD
     id: raw.local_id ?? raw.id ?? null,
     globalId: raw.global_id ?? null,
     number: raw.local_id ?? raw.number ?? null,
-    status: raw.status ?? "",
+    status: canonicalStatus(raw.status ?? ""),
     amount: raw.loan_sum ?? raw.amount ?? null,
     termMonths: raw.loan_duration ?? raw.termMonths ?? null,
     rate: raw.loan_interest ?? raw.rate ?? null,
     productName: raw.loan_name ?? raw.product_name ?? raw.productName ?? map[raw.loan_id] ?? "",
     purpose: raw.purpose ?? "",
     createdAt: raw.time_of_application ?? raw.created_at ?? null,
-=======
-    id: raw.id ?? raw.global_id ?? null,
-    number: raw.number ?? raw.local_id ?? null,
-    status: raw.status ?? "",
-    amount: raw.amount ?? raw.loan_sum ?? null,
-    termMonths: raw.termMonths ?? raw.loan_duration ?? null,
-    rate: raw.rate ?? raw.loan_interest ?? null,
-    productName: raw.productName ?? raw.loan_name ?? raw.product_name ?? "",
->>>>>>> af557a0a94b52ccee2e46e62551c295be6913ca1
   }
 }
 
 
-<<<<<<< HEAD
 // ---------- элемент ленты (лог смены статуса) -> поля для FeedCard ----------
 // appsList - уже нормализованные заявки, чтобы по application_global_id
 // собрать сабтайтл "Заявка № X на Y ₽" как на макете.
@@ -209,16 +174,12 @@ function normalizeFeedItem(raw, appsList, index) {
     ? String(raw.comment)
     : (FEED_STATUS_TEXT[status] ?? "")
 
-=======
-function normalizeFeedItem(raw, index) {
-  console.log("feed raw:", raw)
->>>>>>> af557a0a94b52ccee2e46e62551c295be6913ca1
   return {
     id: raw.id ?? raw.event_id ?? index,
-    type: raw.event_type ?? raw.type ?? "STATUS_UPDATE",
-    subtitle: raw.application_summary ?? raw.subtitle ?? null,
-    title: raw.title ?? raw.event_title ?? "",
-    text: raw.message ?? raw.text ?? raw.description ?? "",
+    type: "STATUS_UPDATE",
+    subtitle: subtitle,
+    title: title,
+    text: text,
   }
 }
 
@@ -335,52 +296,42 @@ function ClientDashboard() {
     setLoading(true)
     setError("")
 
+    const token = localStorage.getItem("token")
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    }
+
     try {
-<<<<<<< HEAD
-      const [dashRes, prodRes] = await Promise.all([
+            const [dashRes, prodRes] = await Promise.all([
         fetch(API_URL + "/api/client/dashboard", { headers }),
         fetch(API_URL + "/api/products", { headers }).catch(function (e) {
           console.error("products упал (не критично):", e)
           return null
         }),
       ])
-=======
-      const token = localStorage.getItem("token")
->>>>>>> af557a0a94b52ccee2e46e62551c295be6913ca1
 
-      const response = await fetch(API_URL + "/api/client/dashboard", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-      })
-
-      if (response.status === 401) {
+      if (dashRes.status === 401) {
         localStorage.removeItem("token")
         localStorage.removeItem("user")
         navigate("/login")
         return
       }
 
-      const rawText = await response.text()
+      const dashText = await dashRes.text()
       let data = null
       try {
-        data = JSON.parse(rawText)
+        data = JSON.parse(dashText)
       } catch (parseErr) {
-        console.error("Ответ не JSON. Статус:", response.status, "Тело:", rawText.slice(0, 200))
+        console.error("dashboard: ответ не JSON", dashRes.status, dashText.slice(0, 200))
         throw parseErr
       }
 
-      if (response.ok) {
-        setUser(normalizeUserFromInfo(data.userInfo))
-        setCompany(normalizeCompanyFromInfo(data.userInfo))
-        setApplications((data.applications || []).map(normalizeApplication))
-        setFeed((data.latestApplicationsLog || []).map(normalizeFeedItem))
-        setOffers((data.recommendations || []).map(normalizeOffer))
-      } else {
-        setError(data.message || "Не удалось загрузить данные")
+      if (!dashRes.ok) {
+        setError((data && data.message) || "Не удалось загрузить данные")
+        setLoading(false)
+        return
       }
-<<<<<<< HEAD
 
       // строим карту id продукта -> name из /api/products
       let productMap = {}
@@ -429,8 +380,6 @@ function ClientDashboard() {
         recsRaw = data.products
       }
       setOffers(recsRaw.map(normalizeOffer))
-=======
->>>>>>> af557a0a94b52ccee2e46e62551c295be6913ca1
     } catch (e) {
       console.error("fetch упал:", e)
       setError("Сервер недоступен. Попробуйте обновить страницу")
