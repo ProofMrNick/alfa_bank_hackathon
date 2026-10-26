@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { application } from 'express'
 import db from '../db.js'
 import bki_db from '../../mockDatabase/bki_db.js'
 import fns_db from '../../mockDatabase/fns_db.js'
@@ -51,7 +51,7 @@ router.post('/:applId/submit', (req, res) => {
     const {loan_sum, loan_interest, loan_duration} = req.body
     console.log(`submitting application with id: ${applId} for user: ${userId}, ${loan_duration}, ${loan_interest}, ${loan_sum}`)
     
-    const findApplication = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND status != ? AND status != ?`).get(userId, 'APPROVE', 'DECLINE')
+    const findApplication = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND status != ? AND status != ?`).get(userId, 'ACCEPT', 'DECLINE')
     if(findApplication) {return res.status(403).send({message: "Application already submitted"})}
 
     const createApplication = db.prepare(`INSERT INTO applications (user_id, inn, local_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?)`)
@@ -73,6 +73,21 @@ router.post('/:applId/submit', (req, res) => {
 
 })
 
+router.post('/:applId/acceptOffer', (req, res) =>{
+    const userId = req.userId
+    const { applId } = req.params
+    
+    //console.log('Параметры:', { applId, userId, typeOfId: typeof id, typeOfUserId: typeof userId })
+    const application = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND local_id = ?`).get(userId, applId)
+    const application_status = application.status
+    if(application_status != 'APPROVE' && application_status != 'COUNTEROFFER'){return res.status(403).message("application is not approved yet")}
+
+    const updateStatus = db.prepare("UPDATE applications SET status = ? WHERE user_id = ? AND local_id = ?")
+        updateStatus.run('ACCEPT', userId, applId)
+        console.log(`Application ${userId, applId} accepted`)
+
+    res.sendStatus(200)
+})
 router.post('/:applId/clarify', (req, res) => {
     const userId = req.userId
     const inn = req.inn
