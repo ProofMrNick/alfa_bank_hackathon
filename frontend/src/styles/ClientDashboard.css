@@ -19,7 +19,7 @@
   border: none;
   border-radius: 10px;
   background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  /*box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);*/
   cursor: pointer;
   font-size: 16px;
   color: #1f1f1f;
@@ -77,7 +77,7 @@
 
 .dash-nav-active {
   background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  /*box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);*/
   font-weight: 600;
 }
 
@@ -93,53 +93,12 @@
   min-width: 0;
 }
 
-.dash-header {
-  margin-bottom: 24px;
-}
-
-.dash-hello {
-  font-family: var(--font-title);
-  font-size: 34px;
-  font-weight: 800;
-  margin: 0 0 4px 0;
-}
-
-.dash-company {
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #6b6b6b;
-  margin: 0;
-}
-
-.dash-note {
-  color: #6b6b6b;
-  font-size: 14px;
-}
-
-.dash-note-error {
-  color: #ef3124;
-}
-
-/* сетка: слева широкий столбец, справа узкий */
-.dash-grid {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 24px;
-  align-items: start;
-}
-
-.dash-col-left {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
+.dash-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+.dash-col-left { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 
 .dash-block {
-  background-color: #ffffff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  background-color: #ffffff; border-radius: 16px; padding: 24px;
+  /*box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);*/
 }
 
 .dash-block-title {
@@ -248,78 +207,28 @@
   flex-direction: column;
   gap: 6px;
 }
-
-.dash-feed-type {
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: #8a8a8a;
-}
-
-.dash-feed-sub {
-  font-size: 12px;
-  color: #6b6b6b;
-}
-
-.dash-feed-title {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.dash-feed-text {
-  font-size: 13px;
-  color: #6b6b6b;
-  line-height: 1.4;
-}
+.dash-feed-type { font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: #8a8a8a; }
+.dash-feed-sub  { font-size: 12px; color: #6b6b6b; }
+.dash-feed-title{ font-size: 23px; font-weight: 700; margin: 20px 0 0 0; }
+.dash-feed-text { font-size: 13px; color: #6b6b6b; line-height: 1.4; }
 
 /* ---------- правая колонка: предложения ---------- */
-.dash-col-right {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.dash-offer-card {
-  border-radius: 16px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.offer-blue { background-color: #e8f1fb; }
+.dash-col-right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.dash-offer-card { border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+.offer-blue  { background-color: #e8f1fb; }
 .offer-peach { background-color: #fdeae1; }
+.dash-offer-name { font-size: 16px; font-weight: 700; }
+.dash-offer-desc { font-size: 12px; color: #555; line-height: 1.4; margin-bottom: 4px; }
+.dash-offer-params { display: flex; gap: 12px; margin-bottom: 6px; }
+.dash-offer-param { display: flex; flex-direction: column; gap: 2px; }
+.dash-offer-label { font-size: 11px; color: #6b6b6b; }
+.dash-offer-value { font-size: 14px; font-weight: 700; }
 
-.dash-offer-name {
-  font-size: 16px;
-  font-weight: 700;
-}
+.dash-app-card,
+.dash-feed-card { overflow: hidden; }
 
-.dash-offer-desc {
-  font-size: 12px;
-  color: #555;
-  line-height: 1.4;
-  margin-bottom: 4px;
-}
-
-.dash-offer-params {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 6px;
-}
-
-.dash-offer-param {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.dash-offer-label {
-  font-size: 11px;
-  color: #6b6b6b;
-}
-
-.dash-offer-value {
-  font-size: 14px;
-  font-weight: 700;
+.dash-feed-text,
+.dash-app-product {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }

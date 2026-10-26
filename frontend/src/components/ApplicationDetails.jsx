@@ -23,10 +23,28 @@ const STATUS_META = {
   COMPLETED:    { label: "Завершена",             kind: "completed", step: 3 },
   CANCELLED:    { label: "Отменена",              kind: "cancelled", step: 3 },
 }
+
+const STATUS_ALIASES = {
+  CREATE:   "CREATED",
+  SUBMIT:   "SUBMITTED",
+  CLARIFY:  "CLARIFIED",
+  APPROVE:  "APPROVED",
+  DECLINE:  "DECLINED",
+  REJECT:   "REJECTED",
+  COMPLETE: "COMPLETED",
+  ACCEPT:   "COMPLETED",
+  ACCEPTED: "COMPLETED",
+  CANCEL:   "CANCELLED",
+}
+
+function canonicalStatus(status) {
+  return STATUS_ALIASES[status] || status
+}
+
 const FALLBACK_META = { label: "", kind: "unknown", step: 0 }
 
 function metaOf(status) {
-  return STATUS_META[status] || { label: status, kind: "unknown", step: 0 }
+  return STATUS_META[canonicalStatus(status)] || { label: status, kind: "unknown", step: 0 }
 }
 
 function badgeClass(kind) {
@@ -175,7 +193,7 @@ function normalizeHistoryEvent(raw, index) {
 function timeForStep(events, stepIndex) {
   for (let i = 0; i < events.length; i++) {
     const ev = events[i]
-    const m = STATUS_META[ev.status]
+    const m = STATUS_META[canonicalStatus(ev.status)]
     if (m && m.step === stepIndex) return ev.time
   }
   return null
@@ -696,7 +714,7 @@ function ApplicationDetails() {
 
         <main className="app-main">
           <button className="app-back-pill" onClick={() => navigate("/")}>
-            ← Назад на Главную
+            <span className="material-symbols-outlined">arrow_back</span> Назад на Главную
           </button>
 
           {loading && <p className="app-note">Загрузка…</p>}

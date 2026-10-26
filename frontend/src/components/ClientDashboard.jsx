@@ -6,16 +6,40 @@ const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 
 const STATUS_MAP = {
-  DRAFT: { label: "Черновик", cls: "badge-gray" },
-  SUBMITTED: { label: "Отправлена", cls: "badge-blue" },
-  ENRICHMENT: { label: "Проверяем данные", cls: "badge-blue" },
-  SCORING: { label: "Оцениваем заявку", cls: "badge-blue" },
-  UNDER_REVIEW: { label: "В рассмотрении", cls: "badge-gray" },
-  NEED_MORE_INFO: { label: "Нужны данные", cls: "badge-orange" },
-  COUNTEROFFER: { label: "Есть предложение", cls: "badge-purple" },
-  APPROVED: { label: "Одобрено", cls: "badge-green" },
-  DECLINED: { label: "Отказано", cls: "badge-red" },
-  COMPLETED: { label: "Завершена", cls: "badge-green" },
+  DRAFT:        { label: "Черновик",              cls: "badge-gray" },
+  CREATE:      { label: "Создана",               cls: "badge-pending" },
+  SUBMIT:    { label: "Отправлена",            cls: "badge-pending" },
+  ENRICHMENT:   { label: "Проверяем данные",      cls: "badge-pending" },
+  SCORING:      { label: "Оцениваем заявку",      cls: "badge-pending" },
+  PENDING:      { label: "На рассмотрении",       cls: "badge-pending" },
+  UNDER_REVIEW: { label: "В рассмотрении",        cls: "badge-pending" },
+  CLARIFY:    { label: "Данные обновлены",      cls: "badge-pending" },
+  NEED_INFO:    { label: "Нужны данные",          cls: "badge-orange" },
+  REQUEST_INFO: { label: "Нужны данные",          cls: "badge-orange" },
+  COUNTEROFFER: { label: "Есть предложение",      cls: "badge-purple" },
+  APPROVE:     { label: "Одобрено",              cls: "badge-green" },
+  DECLINE:     { label: "Отказано",              cls: "badge-red" },
+  REJECT:     { label: "Отказано",              cls: "badge-red" },
+  COMPLETE:    { label: "Завершена",             cls: "badge-green" },
+  ACCEPT:      { label: "Завершена",             cls: "badge-green" }, 
+  CANCEL:    { label: "Отменена",              cls: "badge-gray" },
+}
+
+// just in case backend sends data in past tense
+const STATUS_ALIASES = {
+  CREATED:   "CREATE",
+  SUBMITTED: "SUBMIT",
+  CLARIFIED: "CLARIFY",
+  APPROVED:  "APPROVE",
+  DECLINED:  "DECLINE",
+  REJECTED:  "REJECT",
+  COMPLETED: "COMPLETE",
+  ACCEPTED:  "ACCEPT",
+  CANCELLED: "CANCEL",
+}
+
+function canonicalStatus(status) {
+  return STATUS_ALIASES[status] || status
 }
 
 // типы сообщений в ленте
@@ -25,6 +49,45 @@ const FEED_TYPE_MAP = {
   OFFER_READY: "Предложение банка",
   RECOMMENDATION: "Рекомендация",
   TIP: "Подсказка",
+}
+
+const FEED_STATUS_TITLE = {
+  CREATE:       "Заявка создана",
+  SUBMIT:       "Заявка отправлена",
+  PENDING:      "Заявка на стадии рассмотрения",
+  UNDER_REVIEW: "Заявка на стадии рассмотрения",
+  ENRICHMENT:   "Проверяем данные",
+  SCORING:      "Оцениваем заявку",
+  NEED_INFO:    "Нужны дополнительные данные",
+  REQUEST_INFO: "Нужны дополнительные данные",
+  CLARIFY:      "Данные обновлены",
+  COUNTEROFFER: "Банк предложил другие условия",
+  APPROVE:      "Кредит одобрен",
+  DECLINE:      "Отказ в предоставлении кредита",
+  REJECT:       "Отказ в предоставлении кредита",
+  COMPLETE:     "Кредит оформлен",
+  ACCEPT:       "Кредит оформлен",
+  CANCEL:       "Заявка отменена",
+}
+
+
+const FEED_STATUS_TEXT = {
+  CREATE: "Мы приняли вашу заявку и начали обработку.",
+  SUBMIT: "Заявка отправлена в банк.",
+  PENDING: "Банк рассматривает вашу заявку. Никаких действий не требуется.",
+  UNDER_REVIEW: "Банк рассматривает вашу заявку. Никаких действий не требуется.",
+  ENRICHMENT: "Проверяем данные компании по внешним источникам.",
+  SCORING: "Оцениваем кредитный риск по заявке.",
+  NEED_INFO: "Заполните недостающие данные, чтобы продолжить рассмотрение.",
+  REQUEST_INFO: "Заполните недостающие данные, чтобы продолжить рассмотрение.",
+  CLARIFY: "Вы обновили данные, заявка снова на рассмотрении.",
+  COUNTEROFFER: "Банк предложил скорректированные условия. Посмотрите детали в заявке.",
+  APPROVE: "Банк готов предложить финансирование. Посмотрите условия в заявке.",
+  DECLINE: "К сожалению, банк не смог одобрить финансирование.",
+  REJECT: "К сожалению, банк не смог одобрить финансирование.",
+  COMPLETE: "Предложение принято, кредит оформлен (выдача смоделирована).",
+  ACCEPT:   "Вы приняли предложение банка. Кредит оформлен (выдача смоделирована).",
+  CANCEL: "Вы отклонили предложение банка.",
 }
 
 function formatMoney(value) {
@@ -54,11 +117,10 @@ function normalizeCompanyFromInfo(info) {
   }
 }
 
-// продукт из recommendations -> поля для OfferCard.
-// Работает в двух режимах:
-//   1) каталог (current): id / name / interest_rate / duration / max_amount, itemId нет
-//   2) остатки сессий подбора (future): itemId / preliminaryLimit / preliminaryRate / termMonths
-// Через ?? берём первое непустое, поэтому одна функция годится для обоих.
+
+// ---------- продукт из products -> поля для OfferCard ----------
+// режим 1 (сейчас): каталог id/name/interest_rate/duration/max_amount, itemId нет
+// режим 2 (потом):  остатки сессий itemId/preliminaryLimit/preliminaryRate/termMonths
 function normalizeOffer(raw) {
   return {
     id: raw.id ?? raw.productId ?? null,
@@ -74,29 +136,62 @@ function normalizeOffer(raw) {
 }
 
 
-function normalizeApplication(raw) {
-  console.log("application raw:", raw)
+function normalizeApplication(raw, productMap) {
+  const map = productMap || {}
   return {
-    id: raw.id ?? raw.global_id ?? null,
-    number: raw.number ?? raw.local_id ?? null,
-    status: raw.status ?? "",
-    amount: raw.amount ?? raw.loan_sum ?? null,
-    termMonths: raw.termMonths ?? raw.loan_duration ?? null,
-    rate: raw.rate ?? raw.loan_interest ?? null,
-    productName: raw.productName ?? raw.loan_name ?? raw.product_name ?? "",
+    id: raw.local_id ?? raw.id ?? null,
+    globalId: raw.global_id ?? null,
+    number: raw.local_id ?? raw.number ?? null,
+    status: canonicalStatus(raw.status ?? ""),
+    amount: raw.loan_sum ?? raw.amount ?? null,
+    termMonths: raw.loan_duration ?? raw.termMonths ?? null,
+    rate: raw.loan_interest ?? raw.rate ?? null,
+    productName: raw.loan_name ?? raw.product_name ?? raw.productName ?? map[raw.loan_id] ?? "",
+    purpose: raw.purpose ?? "",
+    createdAt: raw.time_of_application ?? raw.created_at ?? null,
   }
 }
 
 
-function normalizeFeedItem(raw, index) {
-  console.log("feed raw:", raw)
+// ---------- элемент ленты (лог смены статуса) -> поля для FeedCard ----------
+// appsList - уже нормализованные заявки, чтобы по application_global_id
+// собрать сабтайтл "Заявка № X на Y ₽" как на макете.
+function normalizeFeedItem(raw, appsList, index) {
+  const linked = (appsList || []).find(function (a) {
+    return a.globalId != null && a.globalId === raw.application_global_id
+  })
+
+  let subtitle = null
+  if (linked) {
+    subtitle = "Заявка № " + linked.number + " на " + formatMoney(linked.amount)
+  } else if (raw.application_global_id != null) {
+    subtitle = "Заявка (id " + raw.application_global_id + ")"
+  }
+
+  const status = canonicalStatus(raw.new_status ?? raw.status ?? "")
+  const title = FEED_STATUS_TITLE[status] ?? status
+  const text = isReadableComment(raw.comment)
+    ? String(raw.comment)
+    : (FEED_STATUS_TEXT[status] ?? "")
+
   return {
     id: raw.id ?? raw.event_id ?? index,
-    type: raw.event_type ?? raw.type ?? "STATUS_UPDATE",
-    subtitle: raw.application_summary ?? raw.subtitle ?? null,
-    title: raw.title ?? raw.event_title ?? "",
-    text: raw.message ?? raw.text ?? raw.description ?? "",
+    type: "STATUS_UPDATE",
+    subtitle: subtitle,
+    title: title,
+    text: text,
   }
+}
+
+// comment бэкенда может быть техническим JSON-дампом (лог clarify/decision
+// с перечнем rejected-полей). Такой «текст» в клиентскую ленту не пускаем.
+function isReadableComment(comment) {
+  if (comment == null) return false
+  const s = String(comment).trim()
+  if (s === "") return false
+  if (s.charAt(0) === "{" || s.charAt(0) === "[") return false  // JSON/массив
+  if (s.length > 200) return false                               // страховка от дампов без скобок
+  return true
 }
 
 
@@ -201,41 +296,90 @@ function ClientDashboard() {
     setLoading(true)
     setError("")
 
+    const token = localStorage.getItem("token")
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    }
+
     try {
-      const token = localStorage.getItem("token")
+            const [dashRes, prodRes] = await Promise.all([
+        fetch(API_URL + "/api/client/dashboard", { headers }),
+        fetch(API_URL + "/api/products", { headers }).catch(function (e) {
+          console.error("products упал (не критично):", e)
+          return null
+        }),
+      ])
 
-      const response = await fetch(API_URL + "/api/client/dashboard", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-        },
-      })
-
-      if (response.status === 401) {
+      if (dashRes.status === 401) {
         localStorage.removeItem("token")
         localStorage.removeItem("user")
         navigate("/login")
         return
       }
 
-      const rawText = await response.text()
+      const dashText = await dashRes.text()
       let data = null
       try {
-        data = JSON.parse(rawText)
+        data = JSON.parse(dashText)
       } catch (parseErr) {
-        console.error("Ответ не JSON. Статус:", response.status, "Тело:", rawText.slice(0, 200))
+        console.error("dashboard: ответ не JSON", dashRes.status, dashText.slice(0, 200))
         throw parseErr
       }
 
-      if (response.ok) {
-        setUser(normalizeUserFromInfo(data.userInfo))
-        setCompany(normalizeCompanyFromInfo(data.userInfo))
-        setApplications((data.applications || []).map(normalizeApplication))
-        setFeed((data.latestApplicationsLog || []).map(normalizeFeedItem))
-        setOffers((data.recommendations || []).map(normalizeOffer))
-      } else {
-        setError(data.message || "Не удалось загрузить данные")
+      if (!dashRes.ok) {
+        setError((data && data.message) || "Не удалось загрузить данные")
+        setLoading(false)
+        return
       }
+
+      // строим карту id продукта -> name из /api/products
+      let productMap = {}
+      let productsList = []
+      if (prodRes && prodRes.ok) {
+        try {
+          const prodText = await prodRes.text()
+          const prodData = JSON.parse(prodText)
+          const list = Array.isArray(prodData) ? prodData : (prodData.products || prodData.loans || [])
+          productsList = list
+          for (let i = 0; i < list.length; i++) {
+            const p = list[i]
+            const pid = p.id ?? p.product_id ?? p.loan_id
+            const pname = p.name ?? p.product_name ?? p.title ?? ""
+            if (pid != null) productMap[pid] = pname
+          }
+        } catch (e) {
+          console.error("products parse:", e)
+        }
+      }
+
+      setUser(normalizeUserFromInfo(data.userInfo))
+      setCompany(normalizeCompanyFromInfo(data.userInfo))
+
+      // заявки нормализуем ПЕРВЫМИ (нужна productMap и globalId для ленты)
+      const appsNorm = (data.applications || []).map(function (raw) {
+        return normalizeApplication(raw, productMap)
+      })
+      setApplications(appsNorm)
+
+      // ленту нормализуем ВТОРЫМИ (нужен appsNorm для сабтайтла)
+      const feedNorm = (data.latestApplicationsLog || []).map(function (raw, idx) {
+        return normalizeFeedItem(raw, appsNorm, idx)
+      })
+      setFeed(feedNorm)
+
+      
+      console.log("data.recommendations:", data.recommendations)
+      console.log("data.products:", data.products)
+      console.log("productsList:", productsList)
+
+      let recsRaw = productsList
+      if (Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+        recsRaw = data.recommendations
+      } else if (Array.isArray(data.products) && data.products.length > 0) {
+        recsRaw = data.products
+      }
+      setOffers(recsRaw.map(normalizeOffer))
     } catch (e) {
       console.error("fetch упал:", e)
       setError("Сервер недоступен. Попробуйте обновить страницу")
@@ -307,6 +451,7 @@ function ClientDashboard() {
   function handleLogout() {
     localStorage.removeItem("token")
     localStorage.removeItem("user")
+    localStorage.removeItem("userName")
     navigate("/login")
   }
 
