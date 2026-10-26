@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/ClientDashboard.css';
+import { STATUS_LABELS } from '../applicationContract.js';
 
 const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 
-const STATUS_MAP = {
-  DRAFT: { label: "Черновик", cls: "badge-gray" },
-  SUBMITTED: { label: "Отправлена", cls: "badge-blue" },
-  ENRICHMENT: { label: "Проверяем данные", cls: "badge-blue" },
-  SCORING: { label: "Оцениваем заявку", cls: "badge-blue" },
-  UNDER_REVIEW: { label: "В рассмотрении", cls: "badge-gray" },
-  NEED_MORE_INFO: { label: "Нужны данные", cls: "badge-orange" },
-  COUNTEROFFER: { label: "Есть предложение", cls: "badge-purple" },
-  APPROVED: { label: "Одобрено", cls: "badge-green" },
-  DECLINED: { label: "Отказано", cls: "badge-red" },
-  COMPLETED: { label: "Завершена", cls: "badge-green" },
-}
+const STATUS_MAP = Object.fromEntries(Object.entries(STATUS_LABELS).map(([status, label]) => [status, {
+  label,
+  cls: status === 'APPROVED' || status === 'ACCEPTED' ? 'badge-green'
+    : status === 'DECLINED' || status === 'CANCELLED' ? 'badge-red'
+      : status === 'NEED_MORE_INFO' ? 'badge-orange'
+        : status === 'COUNTEROFFER' ? 'badge-purple' : 'badge-gray',
+}]))
 
 // типы сообщений в ленте
 const FEED_TYPE_MAP = {
@@ -77,7 +73,7 @@ function normalizeOffer(raw) {
 function normalizeApplication(raw) {
   console.log("application raw:", raw)
   return {
-    id: raw.id ?? raw.global_id ?? null,
+    id: raw.local_id ?? raw.id ?? raw.global_id ?? null,
     number: raw.number ?? raw.local_id ?? null,
     status: raw.status ?? "",
     amount: raw.amount ?? raw.loan_sum ?? null,

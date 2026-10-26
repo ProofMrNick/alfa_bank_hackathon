@@ -7,20 +7,15 @@ const API_URL = import.meta.env.VITE_LOCAL_API_URL;
 
 const STATUS_META = {
   DRAFT:        { label: "Черновик",              kind: "draft",     step: 0 },
-  CREATED:      { label: "Черновик",              kind: "draft",     step: 0 },
   SUBMITTED:    { label: "Отправлена",            kind: "pending",   step: 1 },
   ENRICHMENT:   { label: "Проверяем данные",      kind: "pending",   step: 1 },
   SCORING:      { label: "Оцениваем заявку",      kind: "pending",   step: 1 },
-  PENDING:      { label: "На рассмотрении",       kind: "pending",   step: 2 },
   UNDER_REVIEW: { label: "В рассмотрении банком", kind: "pending",   step: 2 },
-  CLARIFIED:    { label: "Данные обновлены",      kind: "pending",   step: 2 },
-  NEED_INFO:    { label: "Нужны данные",          kind: "need_info", step: 2 },
-  REQUEST_INFO: { label: "Нужны данные",          kind: "need_info", step: 2 },
+  NEED_MORE_INFO:{ label: "Нужны данные",         kind: "need_info", step: 2 },
   COUNTEROFFER: { label: "Есть предложение",      kind: "offer",     step: 3 },
   APPROVED:     { label: "Одобрено",              kind: "approved",  step: 3 },
   DECLINED:     { label: "Отказано",              kind: "declined",  step: 3 },
-  REJECTED:     { label: "Отказано",              kind: "declined",  step: 3 },
-  COMPLETED:    { label: "Завершена",             kind: "completed", step: 3 },
+  ACCEPTED:     { label: "Предложение принято",   kind: "completed", step: 3 },
   CANCELLED:    { label: "Отменена",              kind: "cancelled", step: 3 },
 }
 const FALLBACK_META = { label: "", kind: "unknown", step: 0 }
@@ -530,11 +525,11 @@ function ApplicationDetails() {
   }
 
   function handleAccept() {
-    doAction("/accept-offer", null)
+    doAction("/accept", null)
   }
 
   function handleDeclineOffer() {
-    doAction("/decline-offer", null)
+    doAction("/decline", null)
   }
 
   function handleLogout() {

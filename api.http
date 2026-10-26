@@ -1,0 +1,86 @@
+@baseUrl = http://localhost:5003/api
+@clientUsername = api-demo-client
+@clientPassword = demo-password-123
+@employeeUsername = employee
+@employeePassword = replace-from-env
+
+### Register a demo client (run once)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "{{clientUsername}}",
+  "password": "{{clientPassword}}",
+  "inn": "7700000001",
+  "email": "api-demo@example.local",
+  "companyName": "ООО Вектор"
+}
+
+### Client login
+# @name clientLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{clientUsername}}",
+  "password": "{{clientPassword}}"
+}
+
+### Employee login
+# @name employeeLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "{{employeeUsername}}",
+  "password": "{{employeePassword}}"
+}
+
+### Submit and orchestrate; IDs are captured from this response
+# @name submitApplication
+POST {{baseUrl}}/applications
+Authorization: Bearer {{clientLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "loan_id": 1,
+  "loan_sum": 500000,
+  "loan_duration": 12,
+  "purpose": "WORKING_CAPITAL"
+}
+
+### Client application details (dynamic local ID)
+GET {{baseUrl}}/applications/{{submitApplication.response.body.local_id}}
+Authorization: Bearer {{clientLogin.response.body.token}}
+
+### Employee queue
+GET {{baseUrl}}/bank/applications?status=ALL&risk=ALL
+Authorization: Bearer {{employeeLogin.response.body.token}}
+
+### Employee card (dynamic global ID)
+GET {{baseUrl}}/bank/applications/{{submitApplication.response.body.global_id}}
+Authorization: Bearer {{employeeLogin.response.body.token}}
+
+### Request clarification
+POST {{baseUrl}}/bank/applications/{{submitApplication.response.body.global_id}}/decision
+Authorization: Bearer {{employeeLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "type": "REQUEST_INFO",
+  "missingFields": ["monthly_payment"],
+  "comment": "Уточните ежемесячный платёж"
+}
+
+### Client clarifies; scoring is restarted
+POST {{baseUrl}}/applications/{{submitApplication.response.body.local_id}}/clarify
+Authorization: Bearer {{clientLogin.response.body.token}}
+Content-Type: application/json
+
+{
+  "bki_data": { "monthly_payment": 25000 }
+}
+
+### Client accepts an approved offer
+POST {{baseUrl}}/applications/{{submitApplication.response.body.local_id}}/accept
+Authorization: Bearer {{clientLogin.response.body.token}}

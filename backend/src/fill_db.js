@@ -2,6 +2,7 @@ import db from './db.js'
 import bcrypt from 'bcryptjs'
 
 export default function fill_db() {
+    if (db.prepare('SELECT COUNT(*) AS count FROM users').get().count > 0) return
     ///registering accounts for  an employee and ML
     const hashed_employee_password = bcrypt.hashSync(process.env.EMPLOYEE_PASSWORD, 8)
     const hashed_ml_password = bcrypt.hashSync(process.env.ML_PASSWORD, 8)

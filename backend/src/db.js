@@ -22,9 +22,16 @@ db.exec(`
         loan_sum INTEGER,
         loan_interest REAL,
         loan_duration INTEGER,
+        purpose TEXT DEFAULT 'CURRENT_ACTIVITY',
 
         time_of_application DATETIME DEFAULT CURRENT_TIMESTAMP,
-        status TEXT DEFAULT 'CREATED',
+        status TEXT DEFAULT 'DRAFT',
+        approved_amount REAL,
+        approved_term_months INTEGER,
+        approved_rate REAL,
+        missing_fields TEXT DEFAULT '[]',
+        decision_reason TEXT,
+        decision_comment TEXT,
         
 
         FOREIGN KEY(inn) REFERENCES user_info(inn), 
@@ -76,7 +83,7 @@ db.exec(`
     FOR EACH ROW
     BEGIN
         INSERT INTO applications_logs (user_id, application_global_id, new_status, timestamp)
-        VALUES (NEW.user_id, NEW.global_id, 'CREATED', CURRENT_TIMESTAMP);
+        VALUES (NEW.user_id, NEW.global_id, NEW.status, CURRENT_TIMESTAMP);
     END;
 `)
 db.exec(`

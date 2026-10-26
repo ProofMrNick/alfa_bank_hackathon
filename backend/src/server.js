@@ -12,8 +12,8 @@ import healthRoutes from './routes/healthRoutes.js'
 import mocksRoutes from './routes/mocksRoutes.js'
 import authMiddleware from './middleware/authMiddleware.js'
 import fill_db from './fill_db.js'
-const app = express()
-const PORT = process.env.PORT || 5003
+export const app = express()
+const PORT = Number(process.env.PORT || 5003)
 
 // Get the file path from the URL of the current module
 const __filename = fileURLToPath(import.meta.url)
@@ -30,6 +30,7 @@ app.use(cors({
 // Middleware
 app.use(express.json())
 app.use(express.static(path.join(__dirname, '../public')))
+app.get('/api/openapi.yaml', (_req, res) => res.sendFile(path.join(__dirname, '../openapi.yaml')))
 
 
 // Routes
@@ -44,14 +45,20 @@ app.use('/api/products', productsRoutes) // public route, no auth required
 app.use('/api/mocks', mocksRoutes)
 app.use('/api/health', healthRoutes)
 
-app.listen(PORT, () => {
-    console.log(`Server has started on port: ${PORT}`)
-
-
-    fill_db()
-
-    setTimeout(async () => {
+export function startServer(port = PORT) {
+  fill_db()
+  const server = app.listen(port, () => {
+    console.log(`Server has started on port: ${server.address().port}`)
+    if (process.env.SIMULATE_ACTIVITY === 'true') {
+      setTimeout(async () => {
             const { simulateActivity } = await import('./simulateActivity.js');
             await simulateActivity();
-        }, 1500);
-})
+      }, 1500)
+    }
+  })
+  return server
+}
+
+if (path.resolve(process.argv[1] || '') === path.resolve(__filename)) {
+  startServer()
+}

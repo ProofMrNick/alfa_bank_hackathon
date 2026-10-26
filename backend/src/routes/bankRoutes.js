@@ -1,117 +1,146 @@
-import express from "express";
+import express from 'express'
 import db from '../db.js'
-import bki_db from '../../mockDatabase/bki_db.js'
-import fns_db from '../../mockDatabase/fns_db.js'
+import bkiDb from '../../mockDatabase/bki_db.js'
+import fnsDb from '../../mockDatabase/fns_db.js'
+import { applyDecision, runApplicationWorkflow } from '../applicationWorkflow.js'
 
 const router = express.Router()
 
-router.get("/applications", (req, res) => {
+function parseJson(value, fallback) {
+    if (value == null) return fallback
+    try { return JSON.parse(value) } catch { return fallback }
+}
 
-    const getApplication = db.prepare("SELECT * FROM applications")
-    const application = getApplication.all()
+function presentQueueRow(row) {
+    return {
+        ...row,
+        factors: parseJson(row.factors, []),
+        reason_codes: parseJson(row.reason_codes, []),
+        missing_fields: parseJson(row.missing_fields, []),
+    }
+}
 
-    res.json(application)
+router.get('/applications', (req, res) => {
+    const conditions = []
+    const parameters = []
+    if (req.query.status && req.query.status !== 'ALL') {
+        conditions.push('a.status = ?')
+        parameters.push(req.query.status)
+    }
+    if (req.query.risk && req.query.risk !== 'ALL') {
+        conditions.push('sr.risk_level = ?')
+        parameters.push(req.query.risk)
+    }
+    if (req.query.search) {
+        conditions.push('(LOWER(ui.name) LIKE ? OR LOWER(ui.company_name) LIKE ? OR a.inn LIKE ? OR CAST(a.global_id AS TEXT) LIKE ?)')
+        const term = `%${String(req.query.search).toLowerCase()}%`
+        parameters.push(term, term, term, term)
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+    const applications = db.prepare(`
+        SELECT a.*, ui.name AS client_name, ui.company_name, l.name AS loan_name,
+               sr.score AS risk_score, sr.risk_level, sr.default_probability,
+               sr.factors, sr.reason_codes, sr.model_version, sr.created_at AS scored_at
+        FROM applications a
+        LEFT JOIN user_info ui ON ui.user_id = a.user_id
+        LEFT JOIN loans l ON l.id = a.loan_id
+        LEFT JOIN scoring_results sr ON sr.id = (
+            SELECT id FROM scoring_results WHERE application_id = a.global_id ORDER BY version DESC LIMIT 1
+        )
+        ${where}
+        ORDER BY CASE a.status
+            WHEN 'UNDER_REVIEW' THEN 0 WHEN 'NEED_MORE_INFO' THEN 1
+            WHEN 'SCORING' THEN 2 WHEN 'ENRICHMENT' THEN 3 ELSE 4 END,
+            a.time_of_application DESC
+    `).all(...parameters).map(presentQueueRow)
+    res.json({ items: applications, total: applications.length })
 })
 
-router.get("/applications/:applId", (req, res) => {
-    const { applId } = req.params
+router.get('/applications/:applicationId', (req, res) => {
+    const application = db.prepare(`
+        SELECT a.*, ui.name AS client_name, ui.email, ui.company_name, l.name AS loan_name,
+               sr.score AS risk_score, sr.risk_level, sr.default_probability,
+               sr.factors, sr.reason_codes, sr.model_version, sr.version AS scoring_version,
+               sr.trigger AS scoring_trigger, sr.created_at AS scored_at
+        FROM applications a
+        LEFT JOIN user_info ui ON ui.user_id = a.user_id
+        LEFT JOIN loans l ON l.id = a.loan_id
+        LEFT JOIN scoring_results sr ON sr.id = (
+            SELECT id FROM scoring_results WHERE application_id = a.global_id ORDER BY version DESC LIMIT 1
+        )
+        WHERE a.global_id = ?
+    `).get(req.params.applicationId)
+    if (!application) return res.status(404).json({ message: 'Application not found' })
 
-
-    const getApplication = db.prepare("SELECT * FROM applications WHERE global_id = ? ")
-    const application = getApplication.get(applId)
-    if(!application) { return res.status(404).send({ message: "Application not found" }) }
-
-    res.json(application)
+    const history = db.prepare(`
+        SELECT * FROM applications_logs WHERE application_global_id = ? ORDER BY id
+    `).all(application.global_id).map((item) => ({ ...item, metadata: parseJson(item.metadata, {}) }))
+    const scoreHistory = db.prepare(`
+        SELECT * FROM scoring_results WHERE application_id = ? ORDER BY version DESC
+    `).all(application.global_id).map((item) => ({
+        ...item,
+        factors: parseJson(item.factors, []),
+        reason_codes: parseJson(item.reason_codes, []),
+    }))
+    res.json({
+        application: presentQueueRow(application),
+        client: {
+            name: application.client_name,
+            email: application.email,
+            inn: application.inn,
+            company_name: application.company_name,
+        },
+        enrichment: {
+            fns: fnsDb.prepare('SELECT * FROM fns WHERE inn = ?').get(application.inn) || null,
+            bki: bkiDb.prepare('SELECT * FROM bki WHERE inn = ?').get(application.inn) || null,
+            internal: db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(application.inn) || null,
+        },
+        scoring: scoreHistory[0] || null,
+        scoring_history: scoreHistory,
+        history,
+    })
 })
 
-router.post("/applications/:applId/decision", (req, res) => {
-    const {applId} = req.params
-    const {type, approvedAmount = null, approvedTermMonths = null, approvedRate = null, missingFields = null, reason = null, comment = null} = req.body 
-
-
-
-    const getApplication = db.prepare("SELECT * FROM applications WHERE global_id = ?")
-    const application = getApplication.get(applId)
-    if(!application) { return res.status(404).send({ message: "Application not found" }) }
-
-    if (type == "APPROVE" || type == "COUNTEROFFER"){
-        const updateStatus = db.prepare("UPDATE applications SET status = ?, loan_sum = ?, loan_interest = ?, loan_duration = ? WHERE global_id == ?")
-        updateStatus.run(type, approvedAmount, approvedRate, approvedTermMonths, applId)
-        console.log(`Decision for application ${req.params.applId}: ${type}`)
-        const addComment = db.prepare(`UPDATE applications_logs
-                    SET comment = ?
-                    WHERE id = (
-                        SELECT id FROM applications_logs 
-                        WHERE application_global_id = ? 
-                        ORDER BY timestamp DESC 
-                        LIMIT 1
-                    )`)
-        addComment.run(comment, applId)
+router.post('/applications/:applicationId/decision', (req, res) => {
+    try {
+        const application = applyDecision(Number(req.params.applicationId), req.body, { source: 'EMPLOYEE' })
+        res.json({ application_id: application.global_id, status: application.status })
+    } catch (error) {
+        res.status(error.statusCode || 500).json({ message: error.message })
     }
-
-    else if(type == "REQUEST_INFO"){
-        const updateStatus = db.prepare("UPDATE applications SET status = ? WHERE global_id == ?")
-        updateStatus.run(type, applId)
-
-        const addCommentAndMetadata = db.prepare(`UPDATE applications_logs
-                    SET comment = ?, metadata = ?
-                    WHERE id = (
-                        SELECT id FROM applications_logs 
-                        WHERE application_global_id = ? 
-                        ORDER BY timestamp DESC 
-                        LIMIT 1
-                    )`)
-        addCommentAndMetadata.run(comment, `{missingFields: ${missingFields}}`, applId)
-
-    }
-    
-    else if(type == "DECLINE"){
-        const updateStatus = db.prepare("UPDATE applications SET status = ? WHERE global_id == ?")
-        updateStatus.run(type, applId)
-
-        const addCommentAndMetadata = db.prepare(`UPDATE applications_logs
-                    SET comment = ?, metadata = ?
-                    WHERE id = (
-                        SELECT id FROM applications_logs 
-                        WHERE application_global_id = ? 
-                        ORDER BY timestamp DESC 
-                        LIMIT 1
-                    )`)
-        addCommentAndMetadata.run(comment, `{reason: ${reason}}`, applId)
-    }
-    else{
-        return res.status(400).send({ message: "Invalid decision type" })
-    }
-    res.sendStatus(200)
-    //rescoreUser(user_id, applId, type)
 })
-router.get('/applications/:global_id/history', (req, res) => {
-    const { global_id } = req.params
 
-    
-    if(!global_id) { return res.status(404).send({ message: "Application not found" }) }
+router.post('/applications/:applicationId/rescore', async (req, res) => {
+    const application = db.prepare('SELECT global_id FROM applications WHERE global_id = ?').get(req.params.applicationId)
+    if (!application) return res.status(404).json({ message: 'Application not found' })
+    const workflow = await runApplicationWorkflow(application.global_id, 'MANUAL_REVIEW')
+    res.json({ application_id: application.global_id, status: workflow.application.status, warning: workflow.warning || null })
+})
 
-    const getApplicationLogs = db.prepare(`SELECT * FROM applications_logs WHERE application_global_id = ?`)
-    const applicationLogs = getApplicationLogs.all(global_id)
-    if(!applicationLogs) { return res.status(404).send({ message: "Application history not found" }) }
-
-    res.json(applicationLogs)
-
+router.get('/applications/:applicationId/history', (req, res) => {
+    const application = db.prepare('SELECT global_id FROM applications WHERE global_id = ?').get(req.params.applicationId)
+    if (!application) return res.status(404).json({ message: 'Application not found' })
+    res.json(db.prepare(`
+        SELECT * FROM applications_logs WHERE application_global_id = ? ORDER BY id
+    `).all(application.global_id).map((item) => ({ ...item, metadata: parseJson(item.metadata, {}) })))
 })
 
 router.get('/clients/:inn', (req, res) => {
-    const {inn} = req.params
-    const user_info = db.prepare(`SELECT * FROM user_info WHERE inn = ?`).get(inn)
-    const bki     = bki_db.prepare('SELECT * FROM bki WHERE inn = ?').get(inn);
-    const fns     = fns_db.prepare('SELECT * FROM fns WHERE inn = ?').get(inn);
-    const internal_registry = db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(inn);
-    const risk_score_history = db.prepare(`
-        SELECT scoring_results.*
-        FROM scoring_results
-        JOIN applications ON applications.global_id = scoring_results.application_id
-        WHERE applications.inn = ?
-        ORDER BY scoring_results.created_at DESC
-    `).all(inn)
-    res.json({ user_info, bki, fns, internal_registry, risk_score_history })
+    const userInfo = db.prepare('SELECT * FROM user_info WHERE inn = ?').get(req.params.inn)
+    if (!userInfo) return res.status(404).json({ message: 'Client not found' })
+    res.json({
+        user_info: userInfo,
+        bki: bkiDb.prepare('SELECT * FROM bki WHERE inn = ?').get(req.params.inn) || null,
+        fns: fnsDb.prepare('SELECT * FROM fns WHERE inn = ?').get(req.params.inn) || null,
+        internal_registry: db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(req.params.inn) || null,
+        risk_score_history: db.prepare(`
+            SELECT sr.* FROM scoring_results sr
+            JOIN applications a ON a.global_id = sr.application_id
+            WHERE a.inn = ? ORDER BY sr.created_at DESC
+        `).all(req.params.inn).map((item) => ({
+            ...item, factors: parseJson(item.factors, []), reason_codes: parseJson(item.reason_codes, []),
+        })),
+    })
 })
+
 export default router
