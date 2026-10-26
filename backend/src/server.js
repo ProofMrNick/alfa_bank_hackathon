@@ -11,7 +11,7 @@ import bankRoutes from './routes/bankRoutes.js'
 import healthRoutes from './routes/healthRoutes.js'
 import mocksRoutes from './routes/mocksRoutes.js'
 import authMiddleware from './middleware/authMiddleware.js'
-import fill_db, { runAutoTests } from './fill_db.js'
+import fill_db from './fill_db.js'
 const app = express()
 const PORT = process.env.PORT || 5003
 
@@ -49,5 +49,9 @@ app.listen(PORT, () => {
 
 
     fill_db()
-    runAutoTests()
+
+    setTimeout(async () => {
+            const { simulateActivity } = await import('./simulateActivity.js');
+            await simulateActivity();
+        }, 1500);
 })

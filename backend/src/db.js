@@ -52,7 +52,8 @@ db.exec(`
     name TEXT NOT NULL,
     
     risk_score INTEGER,
-    inn TEXT UNIQUE NOT NULL,
+    risk_score_timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    inn TEXT UNIQUE,
     company_name TEXT NOT NULL,
     FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     )

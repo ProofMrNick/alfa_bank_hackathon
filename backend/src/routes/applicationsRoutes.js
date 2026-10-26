@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { application } from 'express'
 import db from '../db.js'
 import bki_db from '../../mockDatabase/bki_db.js'
 import fns_db from '../../mockDatabase/fns_db.js'
@@ -57,7 +57,6 @@ router.post('/', (req, res) => {
         status: 'PENDING',
     })
 })
-
 // View an application
 router.get('/:local_id', (req, res) => {
     const { local_id } = req.params
@@ -74,7 +73,7 @@ router.get('/:local_id/history', (req, res) => {
     const { local_id } = req.params
     const userId = req.userId
 
-    
+
     const getGlobalId = db.prepare(`SELECT global_id FROM applications WHERE local_id = ? AND user_id = ?`)
     const globalId = getGlobalId.get(local_id, userId)
     if(!globalId) { return res.status(404).send({ message: "Application not found" }) }
@@ -97,7 +96,7 @@ router.post('/:applId/submit', (req, res) => {
     const {loan_id, loan_sum, loan_interest, loan_duration} = req.body
     console.log(`submitting application with id: ${applId} for user: ${userId}, ${loan_id}, ${loan_duration}, ${loan_interest}, ${loan_sum}`)
     
-    const findApplication = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND loan_id = ? AND status != ? AND status != ?`).get(userId, loan_id, 'APPROVE', 'DECLINE')
+    const findApplication = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND loan_id = ? AND status != ? AND status != ?`).get(userId, loan_id, 'ACCEPT', 'DECLINE')
     if(findApplication) {return res.status(403).send({message: "Application already submitted"})}
     const createApplication = db.prepare(`INSERT INTO applications (user_id, inn, local_id, loan_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?, ?)`)
     createApplication.run(userId, inn, applId, loan_id, loan_sum, loan_interest, loan_duration)
@@ -113,16 +112,32 @@ router.post('/:applId/submit', (req, res) => {
 
 })
 
+router.post('/:applId/acceptOffer', (req, res) =>{
+    const userId = req.userId
+    const { applId } = req.params
+    
+    //console.log('Параметры:', { applId, userId, typeOfId: typeof id, typeOfUserId: typeof userId })
+    const application = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND local_id = ?`).get(userId, applId)
+    const application_status = application.status
+    if(application_status != 'APPROVE' && application_status != 'COUNTEROFFER'){return res.status(403).message("application is not approved yet")}
+
+    const updateStatus = db.prepare("UPDATE applications SET status = ? WHERE user_id = ? AND local_id = ?")
+        updateStatus.run('ACCEPT', userId, applId)
+        console.log(`Application ${userId, applId} accepted`)
+
+    res.sendStatus(200)
+})
 router.post('/:applId/clarify', (req, res) => {
     const userId = req.userId
     const inn = req.inn
     const { applId } = req.params
     const { bki_data = {}, fns_data = {}, internal_data = {} } = req.body
 
-    const appRow = db.prepare(`SELECT global_id FROM applications WHERE local_id = ? AND user_id = ?`).get(applId, userId)
+    const appRow = db.prepare(`SELECT * FROM applications WHERE local_id = ? AND user_id = ?`).get(applId, userId)
     if (!appRow) {
         return res.status(404).json({ error: "Заявка не найдена" })
     }
+    console.log(appRow)
     if (appRow.status != 'REQUEST_INFO'){
         return res.status(403).json({ error: "Заявка не нуждается в дополнительной информации" })
     }

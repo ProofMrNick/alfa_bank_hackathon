@@ -11,7 +11,6 @@ router.post('/register', (req, res) => {
     const { username, password, inn, email, companyName } = req.body
 
     const hashedPassword = bcrypt.hashSync(password, 8)
-    console.log(hashedPassword)
 
     try {
         const insertUser = db.prepare(`INSERT INTO users (username, password) VALUES (?, ?)`)
@@ -24,14 +23,17 @@ router.post('/register', (req, res) => {
         const token = jwt.sign({ id: result.lastInsertRowid }, process.env.JWT_SECRET, { expiresIn: '24h' })
         const getUser = db.prepare('SELECT * FROM users WHERE username = ?')
         const user = getUser.get(username)
+
+        const userId = user.id
+        const user_info = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`).get(userId)
         const role = user.role
-        res.json({ token, role})
+        res.json({ token, role, user_info})
     } catch (err) {
         console.log(err.message)
         res.sendStatus(503)
     }
 
-    console.log(db.prepare(`SELECT * FROM user_info`).all())
+    //console.log(db.prepare(`SELECT * FROM user_info`).all())
 })
 
 router.post('/login', (req, res) => {
@@ -41,6 +43,7 @@ router.post('/login', (req, res) => {
     try {
         const getUser = db.prepare('SELECT * FROM users WHERE username = ?')
         const user = getUser.get(username)
+
 
         // if we cannot find a user associated with that username, return out from the function
         if (!user) { return res.status(404).send({ message: "User not found" }) }
@@ -53,7 +56,9 @@ router.post('/login', (req, res) => {
         // then we have a successful authentication
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' })
         const role = user.role
-        res.json({ token, role})
+        const getUserInfo = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`)
+        const user_info = getUserInfo.get(user.id)
+        res.json({ token, role, user_info})
     } catch (err) {
         console.log(err.message)
         res.sendStatus(503)
