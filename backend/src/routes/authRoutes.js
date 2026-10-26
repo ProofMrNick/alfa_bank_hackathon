@@ -2,7 +2,7 @@ import express from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import db from '../db.js'
-
+import { rescoreUser} from '../scoringServices.js'
 const router = express.Router()
 
 // Register a new user endpoing /auth/register
@@ -42,6 +42,7 @@ router.post('/login', (req, res) => {
         const getUser = db.prepare('SELECT * FROM users WHERE username = ?')
         const user = getUser.get(username)
 
+
         // if we cannot find a user associated with that username, return out from the function
         if (!user) { return res.status(404).send({ message: "User not found" }) }
 
@@ -53,7 +54,17 @@ router.post('/login', (req, res) => {
         // then we have a successful authentication
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' })
         const role = user.role
-        res.json({ token, role})
+
+        const getUserInfo = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`)
+        const user_info = getUserInfo.get(user.id)
+        if (role == 'CLIENT'){
+            // if timestamp is older than a week rescore the client
+            const latest_risk_score_timestamp = db.prepare(`SELECT * FROM user_info WHERE user_id = ?`).get(user.id).risk_score_timestamp
+            if (latest_risk_score_timestamp - Date.now() > 7 * 24 * 60 * 60 * 1000) {rescoreUser(user.id, -1, 'OLD_TIMESTAMP')
+    
+            }
+        }
+        res.json({ token, role, user_info})
     } catch (err) {
         console.log(err.message)
         res.sendStatus(503)

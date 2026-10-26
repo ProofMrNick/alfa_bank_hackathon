@@ -9,7 +9,11 @@ export default function fill_db() {
     db.exec(`
         INSERT INTO users (username, password, role) VALUES
         ('employee', '${hashed_employee_password}', 'EMPLOYEE'),
-        ('ml', '${hashed_ml_password}', 'EMPLOYEE')
+        ('ml', '${hashed_ml_password}', 'EMPLOYEE');
+
+        INSERT INTO user_info (user_id, email, name, risk_score, company_name) VALUES
+        (${1}, 'manager@alfa-bank.local', 'Смирнова Ольга Викторовна', '-1', '-1'),
+        (${2}, 'ml@alfa-bank.local', 'Исскуственный Интелект', '-1', '-1');;
     `)
     
 
@@ -32,7 +36,7 @@ async function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function runAutoTests() {
+export async function simulateActivity() {
 
     try {
 

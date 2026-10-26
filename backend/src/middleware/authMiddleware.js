@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
 import db from '../db.js'
 
+
 const authMiddleware = (requiredRole) => {
     return (req, res, next) => {
         const authHeader = req.headers['authorization']

@@ -12,18 +12,6 @@ router.get('/', (req, res) => {
     res.json(applications)
 })
 
-/// Create a new application v 1.0
-/*router.post('/', (req, res) => {
-    
-    const { loan_id } = req.body
-    const application_id = db.prepare('SELECT MAX(application_id) as max_id FROM applications WHERE user_id = ?').get(req.userId).max_id || 0 // get the max application_id for this user, or 0 if none exist
-    const insertApplication = db.prepare(`INSERT INTO applications (user_id, loan_id, application_id) VALUES (?, ?, ?)`)
-    insertApplication.run(req.userId, loan_id, application_id + 1)
-    res.status(201).send({ message: "Application created" })
-
-    })
-*/
-
 // View an application
 router.get('/:local_id', (req, res) => {
     const { local_id } = req.params
@@ -60,22 +48,28 @@ router.post('/:applId/submit', (req, res) => {
     const inn = req.inn
 
     if (!inn) { return res.status(404).send({ message: "INN not found" }) }
-    const {loan_id, loan_sum, loan_interest, loan_duration} = req.body
-    console.log(`submitting application with id: ${applId} for user: ${userId}, ${loan_id}, ${loan_duration}, ${loan_interest}, ${loan_sum}`)
+    const {loan_sum, loan_interest, loan_duration} = req.body
+    console.log(`submitting application with id: ${applId} for user: ${userId}, ${loan_duration}, ${loan_interest}, ${loan_sum}`)
     
-    const findApplication = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND loan_id = ? AND status != ? AND status != ?`).get(userId, loan_id, 'APPROVE', 'DECLINE')
+    const findApplication = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND status != ? AND status != ?`).get(userId, 'APPROVE', 'DECLINE')
     if(findApplication) {return res.status(403).send({message: "Application already submitted"})}
-    const createApplication = db.prepare(`INSERT INTO applications (user_id, inn, local_id, loan_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?, ?)`)
-    createApplication.run(userId, inn, applId, loan_id, loan_sum, loan_interest, loan_duration)
 
-    const fns_info = fns_db.prepare(`SELECT * FROM fns WHERE inn = ?`).get(inn)
-    const bki_info = bki_db.prepare(`SELECT * FROM bki WHERE inn = ?`).get(inn)
+    const createApplication = db.prepare(`INSERT INTO applications (user_id, inn, local_id, loan_sum, loan_interest, loan_duration) VALUES (?, ?, ?, ?, ?, ?)`)
+    createApplication.run(userId, inn, applId, loan_sum, loan_interest, loan_duration)
+
     res.status(201).send({message: "Application created"})
 
+    const application = db.prepare(`SELECT * FROM applications WHERE user_id = ? AND local_id = ?`).get(userId, applId)
 
+    const bki     = bki_db.prepare('SELECT * FROM bki WHERE inn = ?').get(inn);
+    const fns     = fns_db.prepare('SELECT * FROM fns WHERE inn = ?').get(inn);
+    const internal_registry = db.prepare('SELECT * FROM registry_internal WHERE inn = ?').get(inn);
+    const risk_score = db.prepare('SELECT * FROM user_info WHERE user_id = ?').get(userId).risk_score
+    //do smting
+    //run_initial_ML_assertion(application, bki, fns, internal_registry, risk_score)
+    const deleteFromRecommendations = db.prepare(`DELETE FROM recommended_loans WHERE user_id = ? AND loan_sum = ? AND loan_interest = ? AND loan_duration = ?`)
+    deleteFromRecommendations.run(userId, loan_sum, loan_duration, loan_interest)
 
-    const updateApplication = db.prepare(`UPDATE applications SET status = ? WHERE user_id = ? AND local_id = ?`)
-    updateApplication.run('PENDING', userId, applId)
 
 })
 
@@ -85,10 +79,11 @@ router.post('/:applId/clarify', (req, res) => {
     const { applId } = req.params
     const { bki_data = {}, fns_data = {}, internal_data = {} } = req.body
 
-    const appRow = db.prepare(`SELECT global_id FROM applications WHERE local_id = ? AND user_id = ?`).get(applId, userId)
+    const appRow = db.prepare(`SELECT * FROM applications WHERE local_id = ? AND user_id = ?`).get(applId, userId)
     if (!appRow) {
         return res.status(404).json({ error: "Заявка не найдена" })
     }
+    console.log(appRow)
     if (appRow.status != 'REQUEST_INFO'){
         return res.status(403).json({ error: "Заявка не нуждается в дополнительной информации" })
     }
